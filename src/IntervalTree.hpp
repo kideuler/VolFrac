@@ -25,7 +25,6 @@ public:
         this->end = end;
         this->midpoint[0] = (start[0] + end[0]) / 2;
         this->midpoint[1] = (start[1] + end[1]) / 2;
-        this->length = sqrt(pow(end[0] - start[0], 2) + pow(end[1] - start[1], 2));
         this->low = std::min(start[T], end[T]);
         this->high = std::max(start[T], end[T]);
     }
@@ -33,7 +32,6 @@ public:
     vertex start;
     vertex end;
     vertex midpoint;
-    double length;
     double low;
     double high;
 };
