@@ -5,6 +5,7 @@
 #include <vector>
 #include <iostream>
 #include <deque>
+#include <cmath>
 
 using namespace std;
 typedef array<double,2> vertex;
