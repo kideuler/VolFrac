@@ -1,3 +1,6 @@
+#ifndef GRID_HPP
+#define GRID_HPP
+
 #include "IntervalTree.hpp"
 
 using namespace std;
@@ -34,8 +37,12 @@ class Grid {
         double dx;
         double dy;
         vector<IntervalTree<Axis::Y>> shapes;
-        vector<vertex> points;
         vector<bool> inflags;
+
+    public:
+        vector<vertex> points;
         vector<cell> cells;
 
 };
+
+#endif

@@ -1,3 +1,6 @@
+#ifndef __INTERVALTREE_HPP__
+#define __INTERVALTREE_HPP__
+
 #include <array>
 #include <vector>
 #include <iostream>
@@ -166,3 +169,5 @@ class IntervalTree {
         vector<Segment<T>> segments;
         IntervalNode<T>* root;
 };
+
+#endif

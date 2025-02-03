@@ -12,3 +12,7 @@ gtest_discover_tests(GridTest)
 add_executable(VolumeFractionTest VolumeFractionTest.cpp)
 target_link_libraries(VolumeFractionTest PRIVATE VolFrac GTest::GTest GTest::Main)
 gtest_discover_tests(VolumeFractionTest)
+
+add_executable(ComputeVolumeFracCircleTest ComputeVolFracCircleTest.cpp)
+target_link_libraries(ComputeVolumeFracCircleTest PRIVATE VolFrac GTest::GTest GTest::Main)
+gtest_discover_tests(ComputeVolumeFracCircleTest)
