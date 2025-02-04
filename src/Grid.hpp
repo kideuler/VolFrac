@@ -2,6 +2,7 @@
 #define GRID_HPP
 
 #include "IntervalTree.hpp"
+#include "KDTree.hpp"
 
 using namespace std;
 
@@ -26,6 +27,8 @@ class Grid {
 
         void AddShape(const IntervalTree<Axis::Y> &bdy); // Add a shape to the grid
 
+        void AddTree(const KDTree<5> &tree); // Add a kdtre if point data to the grid
+
         void ComputeVolumeFractions(int npaxis); // Compute the volume fractions of the cells
 
         double ComputeTotalVolume(); // Compute the total volume of the grid
@@ -37,6 +40,7 @@ class Grid {
         double dx;
         double dy;
         vector<IntervalTree<Axis::Y>> shapes;
+        vector<KDTree<5>> kd_trees:
         vector<bool> inflags;
 
     public:
