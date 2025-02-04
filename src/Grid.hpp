@@ -40,7 +40,7 @@ class Grid {
         double dx;
         double dy;
         vector<IntervalTree<Axis::Y>> shapes;
-        vector<KDTree<5>> kd_trees:
+        vector<KDTree<5>> kd_trees;
         vector<bool> inflags;
 
     public:
