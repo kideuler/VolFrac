@@ -6,11 +6,12 @@
 template <short DATA_SIZE>
 class KDNode {
 public:
-    KDNode() : left(nullptr), right(nullptr) {} // Default constructor
+    KDNode() : left(nullptr), right(nullptr), parent(nullptr) {} // Default constructor
     vertex point;
     double data[DATA_SIZE];
     KDNode* left;
     KDNode* right;
+    KDNode* parent;
     unsigned int depth = -1;
 
     ~KDNode() { // Destructor
@@ -37,6 +38,7 @@ public:
         if (P[axis] < point[axis]) {
             if (left == nullptr) {
                 left = new KDNode();
+                left->parent = this;
                 left->Insert(P, data, depth + 1);
             } else {
                 left->Insert(P, data, depth + 1);
@@ -44,9 +46,47 @@ public:
         } else {
             if (right == nullptr) {
                 right = new KDNode();
+                right->parent = this;
                 right->Insert(P, data, depth + 1);
             } else {
                 right->Insert(P, data, depth + 1);
+            }
+        }
+    }
+
+    void Search_Down(vertex P, double &best_radius, vertex &best_point, double *best_data) {
+        if (this->depth == -1) {
+            return;
+        }
+
+        double distance = 0;
+        for (int i = 0; i < 2; i++) {
+            distance += (point[i] - P[i]) * (point[i] - P[i]);
+        }
+
+        if (distance < best_radius) {
+            best_radius = distance;
+            best_point = point;
+            for (int i = 0; i < DATA_SIZE; i++) {
+                best_data[i] = data[i];
+            }
+        }
+
+        unsigned int axis = depth % 2;
+
+        if (P[axis] < point[axis]) {
+            if (left != nullptr) {
+                left->Search_Down(P, best_radius, best_point, best_data);
+            }
+            if (right != nullptr && (point[axis] - P[axis]) * (point[axis] - P[axis]) < best_radius) {
+                right->Search_Down(P, best_radius, best_point, best_data);
+            }
+        } else {
+            if (right != nullptr) {
+                right->Search_Down(P, best_radius, best_point, best_data);
+            }
+            if (left != nullptr && (point[axis] - P[axis]) * (point[axis] - P[axis]) < best_radius) {
+                left->Search_Down(P, best_radius, best_point, best_data);
             }
         }
     }
@@ -91,6 +131,15 @@ class KDTree {
                 root = new KDNode<DATA_SIZE>();
             }
             root->Insert(P, data, 0);
+        }
+
+        void Search(vertex P, vertex &best_point, double *best_data) {
+            if (root == nullptr) {
+                return;
+            }
+
+            double best_radius = 1e34;
+            root->Search_Down(P, best_radius, best_point, best_data);
         }
 
         void Print() {
