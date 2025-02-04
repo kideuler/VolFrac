@@ -28,7 +28,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.x'
+        python-version: '3.8'
 
     - name: Create Python virtual environment
       run: |
@@ -36,6 +36,8 @@ jobs:
         python -m venv venv
         source venv/bin/activate
         pip install --upgrade pip
+        pip install numpy
+        pip install torch
 
 
     - name: Configure CMake
