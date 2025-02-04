@@ -27,6 +27,10 @@ void Grid::AddShape(const IntervalTree<Axis::Y> &bdy){
     shapes.push_back(bdy);
 }
 
+void Grid::AddTree(const KDTree<5> &tree) {
+    kd_trees.push_back(tree);
+}
+
 void Grid::ComputeVolumeFractions(int npaxis){
     if (shapes.size() == 0 || points.size() == 0 || cells.size() == 0) {
         return;
