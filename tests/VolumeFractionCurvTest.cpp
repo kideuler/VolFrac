@@ -90,7 +90,7 @@ TEST(VolumeFractionCurveTest, ComputeVolumeFractionsEllipse){
 
 TEST(VolumeFractionCurveTest, ComputeVolumeFractionsFlower){
 
-    const int num_segments = 1000;
+    const int num_segments = 3000;
     const double pi = 3.14159265358979323846;
 
     coords coordinates;
@@ -118,7 +118,7 @@ TEST(VolumeFractionCurveTest, ComputeVolumeFractionsFlower){
     }
 
     BBox box{-0.01, 1.01, -0.01, 1.01};
-    Grid grid(box, 100, 100);
+    Grid grid(box, 130, 200);
     grid.AddTree(tree);
 
     grid.ComputeVolumeFractionsCurv();
