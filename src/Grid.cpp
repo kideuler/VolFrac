@@ -80,6 +80,7 @@ void Grid::ComputeVolumeFractionsCurv(){
         return;
     }
 
+    double maxK = -1e34;
     for (int i = 0; i < cells.size(); i++) {
         cell cell = cells[i];
         double x_min = points[cell.indices[0]][0];
@@ -101,6 +102,9 @@ void Grid::ComputeVolumeFractionsCurv(){
         double dxx_dt = data[2]/dx;
         double dyy_dt = data[3]/dy;
         double K = (dx_dt*dyy_dt - dy_dt*dxx_dt) / pow(dx_dt*dx_dt + dy_dt*dy_dt, 1.5);
+        if (fabs(K) > maxK) {
+            maxK = fabs(K);
+        }
         double R = fabs(1/K);
         double norm = sqrt(dx_dt*dx_dt + dy_dt*dy_dt);
         dx_dt /= norm;
@@ -117,7 +121,6 @@ void Grid::ComputeVolumeFractionsCurv(){
 
         cells[i].volfrac = area;
     }
-
 }
 
 double Grid::ComputeTotalVolume(){

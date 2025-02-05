@@ -21,3 +21,6 @@ target_include_directories(VolFrac PUBLIC src)
 
 # Add testing
 add_subdirectory(tests)
+
+# Add data
+add_subdirectory(data)
