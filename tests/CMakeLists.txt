@@ -18,3 +18,7 @@ gtest_discover_tests(ComputeVolumeFracCircleTest)
 add_executable(KDTreeTest KDTreeTest.cpp)
 target_link_libraries(KDTreeTest PRIVATE VolFrac gtest_main)
 gtest_discover_tests(KDTreeTest)
+
+add_executable(VolumeFractionCurvTest VolumeFractionCurvTest.cpp)
+target_link_libraries(VolumeFractionCurvTest PRIVATE VolFrac gtest_main)
+gtest_discover_tests(VolumeFractionCurvTest)

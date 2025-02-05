@@ -3,6 +3,7 @@
 
 #include "IntervalTree.hpp"
 #include "KDTree.hpp"
+#include "CircleVolFrac.hpp"
 
 using namespace std;
 
@@ -30,6 +31,8 @@ class Grid {
         void AddTree(const KDTree<5> &tree); // Add a kdtre if point data to the grid
 
         void ComputeVolumeFractions(int npaxis); // Compute the volume fractions of the cells
+
+        void ComputeVolumeFractionsCurv(); // Compute the volume fractions of the cells using circle method
 
         double ComputeTotalVolume(); // Compute the total volume of the grid
 

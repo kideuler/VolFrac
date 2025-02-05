@@ -120,12 +120,6 @@ class KDTree {
         KDTree() : root(nullptr) {} // Default constructor
         KDNode<DATA_SIZE>* root;
 
-        ~KDTree() { // Destructor
-            if (root != nullptr) {
-                delete root;
-            }
-        }
-
         void Insert(vertex P, double data[DATA_SIZE]) {
             if (root == nullptr) {
                 root = new KDNode<DATA_SIZE>();

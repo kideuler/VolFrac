@@ -75,6 +75,39 @@ void Grid::ComputeVolumeFractions(int npaxis){
     }
 }
 
+void Grid::ComputeVolumeFractionsCurv(){
+    if (points.size() == 0 || cells.size() == 0 || kd_trees.size() == 0) {
+        return;
+    }
+
+    for (int i = 0; i < cells.size(); i++) {
+        cell cell = cells[i];
+        double x_min = points[cell.indices[0]][0];
+        double x_max = points[cell.indices[1]][0];
+        double y_min = points[cell.indices[0]][1];
+        double y_max = points[cell.indices[2]][1];
+
+        vertex cell_center{(x_min + x_max) / 2, (y_min + y_max) / 2};
+        vertex P; 
+        double data[5];
+        kd_trees[0].Search(cell_center, P, data); // data constains derivative and curvature information
+
+        double R = fabs(1/data[4]);
+        vertex normal{-data[1], data[0]};
+        vertex C{(P[0]+R*normal[0]), (P[1]+R*normal[1])};
+
+        double area = ComputeCircleBoxIntersection(C, R, x_min, x_max, y_min, y_max);
+
+        double volfrac = area / (cell.volume);
+        if (data[4]<0){
+            volfrac = 1.0 - volfrac;
+        }
+
+        cells[i].volfrac = area / (cell.volume);
+    }
+
+}
+
 double Grid::ComputeTotalVolume(){
     double total_volume = 0.0;
     for (int i = 0; i < cells.size(); i++) {
