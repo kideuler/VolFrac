@@ -38,6 +38,7 @@ jobs:
         pip install --upgrade pip
         pip install numpy
         pip install torch
+        pip install scikit-learn
 
 
     - name: Configure CMake
