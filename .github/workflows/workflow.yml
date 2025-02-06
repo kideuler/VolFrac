@@ -31,6 +31,7 @@ jobs:
         python-version: '3.8'
 
     - name: Create Python virtual environment
+      working-directory: ${{github.workspace}}
       run: |
         sudo apt install python3-venv
         python -m venv venv
@@ -41,7 +42,9 @@ jobs:
         pip install scikit-learn
     
     - name: Find Torch CMake Config
+      working-directory: ${{github.workspace}}
       run: |
+        source venv/bin/activate
         echo "::set-output name=torch_dir::$(python -c 'import torch; print(torch.__file__)' | sed 's/\/torch/__init__.py//')"
         echo "::set-output name=cmake_prefix_path::${{ steps.find-torch.outputs.torch_dir }}/share/cmake/Torch"
 
@@ -50,6 +53,7 @@ jobs:
       working-directory: ${{github.workspace}}
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
+      source venv/bin/activate
       run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DARG=20000 -DCMAKE_PREFIX_PATH=${{ steps.find-torch.outputs.cmake_prefix_path }}
 
     - name: Build
