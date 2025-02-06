@@ -39,13 +39,18 @@ jobs:
         pip install numpy
         pip install torch
         pip install scikit-learn
+    
+    - name: Find Torch CMake Config
+      run: |
+        echo "::set-output name=torch_dir::$(python -c 'import torch; print(torch.__file__)' | sed 's/\/torch/__init__.py//')"
+        echo "::set-output name=cmake_prefix_path::${{ steps.find-torch.outputs.torch_dir }}/share/cmake/Torch"
 
 
     - name: Configure CMake
       working-directory: ${{github.workspace}}
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DARG=20000 -DCMAKE_PREFIX_PATH=$(python -c "import site; print(site.getsitepackages()[1])")
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DARG=20000 -DCMAKE_PREFIX_PATH=${{ steps.find-torch.outputs.cmake_prefix_path }}
 
     - name: Build
       working-directory: ${{github.workspace}}
