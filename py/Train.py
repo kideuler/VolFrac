@@ -6,15 +6,32 @@ import math
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 import getopt, sys
+import os
 
-### Creating Dataset Class
 class VolFracDataSet(Dataset):
     def __init__(self, filename):
         xy = np.loadtxt(filename, delimiter=' ', dtype=np.float32)
         self.x = torch.from_numpy(xy[:, :5].astype(np.float32))
         self.y = torch.from_numpy(xy[:, [-1]].astype(np.float32))
-        self.y = self.y.view(self.y.shape[0], 1)
-        self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(self.x, self.y, test_size=0.3)
+        
+        # Split into train/val/test
+        x_temp, self.x_test, y_temp, self.y_test = train_test_split(self.x, self.y, test_size=0.2)
+        self.x_train, self.x_val, self.y_train, self.y_val = train_test_split(x_temp, y_temp, test_size=0.2)
+        
+        # Normalize inputs
+        self.x_mean = self.x_train.mean(dim=0)
+        self.x_std = self.x_train.std(dim=0)
+        self.x_train = (self.x_train - self.x_mean) / self.x_std
+        self.x_val = (self.x_val - self.x_mean) / self.x_std
+        self.x_test = (self.x_test - self.x_mean) / self.x_std
+        
+        # Normalize targets
+        self.y_mean = self.y_train.mean()
+        self.y_std = self.y_train.std()
+        self.y_train = (self.y_train - self.y_mean) / self.y_std
+        self.y_val = (self.y_val - self.y_mean) / self.y_std
+        self.y_test = (self.y_test - self.y_mean) / self.y_std
+        
         self.n_samples = self.x_train.shape[0]
 
     def __len__(self):
@@ -26,32 +43,57 @@ class VolFracDataSet(Dataset):
     def get_test_data(self):
         return self.x_test, self.y_test
 
-
-### Creating Neural Network Class   
 class NeuralNet(nn.Module):
-    def __init__(self, input_size, hidden_size, hidden_size_2, num_classes):
+    def __init__(self, input_size, num_classes):
         super(NeuralNet, self).__init__()
-        self.l1 = nn.Linear(input_size, hidden_size)
-        self.relu = nn.ReLU()
-        self.l2 = nn.Linear(hidden_size, hidden_size_2)
-        self.relu2 = nn.ReLU()
-        self.l4 = nn.Linear(hidden_size_2, num_classes)
+        # Larger architecture
+        self.network = nn.Sequential(
+            nn.Linear(input_size, 64),
+            nn.BatchNorm1d(64),
+            nn.ReLU(),
+            nn.Dropout(0.3),
+            
+            nn.Linear(64, 32),
+            nn.BatchNorm1d(32),
+            nn.ReLU(),
+            nn.Dropout(0.3),
+            
+            nn.Linear(32, 16),
+            nn.BatchNorm1d(16),
+            nn.ReLU(),
+            nn.Dropout(0.3),
+            
+            nn.Linear(16, num_classes)
+        )
+        
+        # Better initialization
+        self.apply(self._init_weights)
+    
+    def _init_weights(self, module):
+        if isinstance(module, nn.Linear):
+            nn.init.kaiming_normal_(module.weight, nonlinearity='relu')
+            if module.bias is not None:
+                nn.init.zeros_(module.bias)
     
     def forward(self, x):
-        out = self.l1(x)
-        out = self.relu(out)
-        out = self.l2(out)
-        out = self.relu2(out)
-        out = self.l4(out)
-        return out
+        return self.network(x)
+
+# Normalization Module
+class NormalizationModule(torch.nn.Module):
+    def __init__(self, x_mean, x_std, y_mean, y_std):
+        super().__init__()
+        self.register_buffer('x_mean', x_mean)
+        self.register_buffer('x_std', x_std)
+        self.register_buffer('y_mean', torch.tensor([y_mean]))
+        self.register_buffer('y_std', torch.tensor([y_std]))
 
 
 ### Beginning of Script
 
 # Parse command line arguments
 argumentList = sys.argv[1:]
-options = "hd:s:m:Pf:n:"
-long_options = ["help","data-path=", "save-path=","model-path=","plot", "save-frequency=", "num-epochs="]
+options = "hd:s:m:n:"
+long_options = ["help","data-path=", "save-path=","model-path=","num-epochs="]
 
 # checking each argument
 plot = False
@@ -68,12 +110,10 @@ try:
     for currentArgument, currentValue in arguments:
         if currentArgument in ("-h", "--help"):
             print ("displaying help")
-            print ("python Train.py -p <data-path> -P -s <save-frequency>")
+            print ("python Train.py")
             print ("-d --data-path: path to the data file")
             print ("-s --save-path: path to save the model")
             print ("-m --model-path: path to load the model")
-            print ("-P --plot: plot the training and testing loss")
-            print ("-f --save-frequency: save the model every <save-frequency> epochs")
             print ("-n --num-epochs: number of epochs to train")
             sys.exit(0)
         if currentArgument in ("-d", "--data-path"):
@@ -83,10 +123,6 @@ try:
         if currentArgument in ("-m", "--model-path"):
             model_path = currentValue
             load_model = True
-        elif currentArgument in ("-P", "--plot"):
-            plot = True
-        elif currentArgument in ("-f", "--save-frequency"):
-            save_frequency = int(currentValue)
         elif currentArgument in ("-n", "--num-epochs"):
             num_epochs = int(currentValue)
 
@@ -98,75 +134,61 @@ dataset = VolFracDataSet(path)
 dataloader = DataLoader(dataset, batch_size=128, shuffle=True)
 n_samples, n_features = dataset.x_train.shape
 
-input_size = n_features
-output_size = 1
-hidden_size = 7
-hidden_size2 = 4
-hidden_size3 = 2
-model = NeuralNet(input_size, hidden_size, hidden_size2, output_size)
+
+model = NeuralNet(input_size=n_features, num_classes=1)
+learning_rate = 0.001
+optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=1e-4)
+criterion = nn.MSELoss()
+scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=5, factor=0.5)
 
 if load_model:
     model = torch.load(model_path, weights_only=False)
     model.eval()
 
-learning_rate = 0.0005
+norm_module = NormalizationModule(
+    dataset.x_mean,
+    dataset.x_std,
+    dataset.y_mean.item(),
+    dataset.y_std.item()
+)
+torch.jit.script(norm_module).save(save_path + "/normalization.pt")
 
-criterion = nn.MSELoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)  
+# Training loop with early stopping
+best_val_loss = float('inf')
+patience = 50
+patience_counter = 0
+grad_clip = 1.0
 
-# 3) Training loop
-if plot:
-    plt.ion()
-trainingEpoch_loss = []
-testingEpoch_loss = []
-epochs = []
 for epoch in range(num_epochs):
-    # Forward pass and loss
-    for id_batch, (x_batch, y_batch) in enumerate(dataloader):
-        y_predicted = model(x_batch)
-        loss = criterion(y_predicted, y_batch)
-    
-        # Backward pass and update
-        loss.backward()
-        optimizer.step()
-
-        # zero grad before new step
+    model.train()
+    for x_batch, y_batch in dataloader:
         optimizer.zero_grad()
-
-    if (epoch+1) % 10 == 0:
-        y_test_predicted = model(dataset.x_test)
-        loss_test = criterion(y_test_predicted, dataset.y_test)
-
-        print(f'epoch: {epoch+1}, loss = {loss.item():.10f}, test loss = {loss_test.item():.10f}')
-        epochs.append(epoch)
-        trainingEpoch_loss.append(math.log10(loss.item()))
-        testingEpoch_loss.append(math.log10(loss_test.item()))
-        # plot the graph
-        if plot:
-            plt.clf()
-            plt.plot(epochs, trainingEpoch_loss, label='Training Loss')
-            plt.plot(epochs, testingEpoch_loss, label='Testing Loss')
-            plt.legend()
-            plt.show()
-            plt.pause(0.01)
-
-    if save_frequency > 0 and (epoch+1) % save_frequency == 0:
-        print("Saving Model")
-        example = torch.rand(1, 5)
-        traced_script_module = torch.jit.trace(model, example)
-        traced_script_module.save(save_path+"/VolFrac.pt")
-        torch.save(model.state_dict(), save_path+"/model_weights.pth")
-
-# check loss on testing data
-with torch.no_grad():
-    X_test, y_test = dataset.get_test_data()
-    y_predicted = model(X_test)
-    loss = criterion(y_predicted, y_test)
-    print(f'Loss: {loss:.10f}')
-    example = torch.rand(1, 5)
-    traced_script_module = torch.jit.trace(model, example)
-    traced_script_module.save(save_path+"/VolFrac.pt")
-    torch.save(model.state_dict(), save_path+"/model_weights.pth")
-    if plot:
-        plt.ioff()
-        plt.show()
+        y_pred = model(x_batch)
+        loss = criterion(y_pred, y_batch)
+        loss.backward()
+        torch.nn.utils.clip_grad_norm_(model.parameters(), grad_clip)
+        optimizer.step()
+    
+    # Validation phase
+    model.eval()
+    with torch.no_grad():
+        val_pred = model(dataset.x_val)
+        val_loss = criterion(val_pred, dataset.y_val)
+        scheduler.step(val_loss)
+        
+        if val_loss < best_val_loss:
+            best_val_loss = val_loss
+            patience_counter = 0
+            example = torch.rand(1, 5)
+            traced_script_module = torch.jit.trace(model, example)
+            traced_script_module.save(save_path+"/VolFrac.pt")
+            torch.save(model.state_dict(), save_path + "/best_model.pth")
+        else:
+            patience_counter += 1
+        
+        if patience_counter >= patience:
+            print("Early stopping triggered")
+            break
+            
+        if (epoch + 1) % 10 == 0:
+            print(f'Epoch: {epoch+1}, Train Loss: {loss:.6f}, Val Loss: {val_loss:.6f}')

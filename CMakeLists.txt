@@ -10,14 +10,20 @@ enable_testing()
 include(CTest)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/googletest)
 include(GoogleTest)
-#find_package(GTest REQUIRED)
 
 # Create a library from all .cpp and .hpp files
-file(GLOB_RECURSE SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/src/*.hpp")
+file(GLOB_RECURSE SOURCES 
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp" 
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/*.hpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/models/*.cpp" 
+    "${CMAKE_CURRENT_SOURCE_DIR}/models/*.hpp")
 add_library(VolFrac SHARED ${SOURCES})
 
+find_package(Torch REQUIRED)
+target_link_libraries(VolFrac PUBLIC ${TORCH_LIBRARIES})
+
 # Include directories
-target_include_directories(VolFrac PUBLIC src)
+target_include_directories(VolFrac PUBLIC src models)
 
 # Add testing
 add_subdirectory(tests)
