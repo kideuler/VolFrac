@@ -45,7 +45,7 @@ jobs:
       working-directory: ${{github.workspace}}
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DARG=20000 -DCMAKE_PREFIX_PATH=${CONDA_PREFIX}/lib/python${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}/site-packages/torch/share/cmake/Torch
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DARG=20000 -DCMAKE_PREFIX_PATH=$(python -c "import site; print(site.getsitepackages()[0])")/torch/share/cmake/Torch
 
     - name: Build
       working-directory: ${{github.workspace}}
