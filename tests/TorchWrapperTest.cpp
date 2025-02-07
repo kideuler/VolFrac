@@ -13,6 +13,7 @@ TEST(TorchWrapperTest, Predict){
     double percent_error = fabs(volfrac - exact) / exact * 100;
     std::cout << "Volume Fraction: " << volfrac << " Exact: " << exact << std::endl;
     std::cout << "Percent Error: " << percent_error << "%" << std::endl;
+    ASSERT_TRUE(percent_error < 5.0);
     
 }
 
@@ -58,4 +59,5 @@ TEST(TorchWrapperTest, Circle){
     double percent_error = 100 * fabs(total_volume - exact) / exact;
     std::cout << "Total Volume: " << total_volume << std::endl;
     std::cout << "Percent Error: " << percent_error << std::endl;
+    ASSERT_TRUE(percent_error < 5.0);
 }
