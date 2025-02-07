@@ -1,3 +1,6 @@
+#ifndef TORCHWRAPPER_HPP
+#define TORCHWRAPPER_HPP
+
 #include <torch/torch.h>
 #include <torch/script.h> // One-stop header.
 #include <iostream>
@@ -13,3 +16,5 @@ class TorchWrapper {
         torch::Tensor x_mean, x_std;
         double y_mean, y_std;
 };
+
+#endif

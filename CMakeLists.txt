@@ -3,9 +3,8 @@ cmake_minimum_required(VERSION 3.24)
 project(VolFracAI)
 
 # Use C++17 standard
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
-add_compile_definitions(_GLIBCXX_USE_CXX11_ABI=0)
 
 include(CTest)
 

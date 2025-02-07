@@ -45,3 +45,22 @@ double ComputeCircleBoxIntersection(const vertex &C, double r, double x_min, dou
 
     return area(x0, x1, y0, y1, r);
 }
+
+// from https://stackoverflow.com/questions/401847/circle-rectangle-collision-detection-intersection
+bool BoxCircleIntersection(double x, double y, double r, double x_min, double x_max, double y_min, double y_max){
+    double dx = x_max - x_min;
+    double dy = y_max - y_min;
+
+    double circle_distance_x = fabs(x - x_min);
+    double circle_distance_y = fabs(y - y_min);
+
+    if (circle_distance_x > (dx/2 + r)) { return false; }
+    if (circle_distance_y > (dy/2 + r)) { return false; }
+
+    if (circle_distance_x <= (dx/2)) { return true; }
+    if (circle_distance_y <= (dy/2)) { return true; }
+
+    double corner_distance_sq = (circle_distance_x - dx/2)*(circle_distance_x - dx/2) + (circle_distance_y - dy/2)*(circle_distance_y - dy/2);
+
+    return (corner_distance_sq <= (r*r));
+}

@@ -35,6 +35,8 @@ class Grid {
 
         void ComputeVolumeFractionsCurv(); // Compute the volume fractions of the cells using circle method
 
+        void ComputeVolumeFractionsAI(); // Compute the volume fractions of the cells using Neural Network model
+
         double ComputeTotalVolume(); // Compute the total volume of the grid
 
     private:
@@ -50,7 +52,7 @@ class Grid {
     public:
         vector<vertex> points;
         vector<cell> cells;
-
+        TorchWrapper *model = nullptr;
 };
 
 #endif

@@ -47,23 +47,32 @@ class NeuralNet(nn.Module):
     def __init__(self, input_size, num_classes):
         super(NeuralNet, self).__init__()
         # Larger architecture
+        H1 = 8
+        H2 = 8
+        H3 = 8
+        H4 = 8
         self.network = nn.Sequential(
-            nn.Linear(input_size, 64),
-            nn.BatchNorm1d(64),
+            nn.Linear(input_size, H1),
+            nn.BatchNorm1d(H1),
             nn.ReLU(),
-            nn.Dropout(0.3),
+            nn.Dropout(0.2),
             
-            nn.Linear(64, 32),
-            nn.BatchNorm1d(32),
+            nn.Linear(H1, H2),
+            nn.BatchNorm1d(H2),
             nn.ReLU(),
-            nn.Dropout(0.3),
+            nn.Dropout(0.2),
             
-            nn.Linear(32, 16),
-            nn.BatchNorm1d(16),
+            nn.Linear(H2, H3),
+            nn.BatchNorm1d(H3),
             nn.ReLU(),
-            nn.Dropout(0.3),
+            nn.Dropout(0.2),
+
+            nn.Linear(H3, H4),
+            nn.BatchNorm1d(H4),
+            nn.ReLU(),
+            nn.Dropout(0.2),
             
-            nn.Linear(16, num_classes)
+            nn.Linear(H4, num_classes)
         )
         
         # Better initialization
@@ -71,9 +80,10 @@ class NeuralNet(nn.Module):
     
     def _init_weights(self, module):
         if isinstance(module, nn.Linear):
-            nn.init.kaiming_normal_(module.weight, nonlinearity='relu')
+            # He/Kaiming initialization
+            nn.init.kaiming_normal_(module.weight, mode='fan_in', nonlinearity='relu')
             if module.bias is not None:
-                nn.init.zeros_(module.bias)
+                nn.init.constant_(module.bias, 0.01)
     
     def forward(self, x):
         return self.network(x)
@@ -131,13 +141,13 @@ except getopt.error as err:
     print (str(err))
 
 dataset = VolFracDataSet(path)
-dataloader = DataLoader(dataset, batch_size=128, shuffle=True)
+dataloader = DataLoader(dataset, batch_size=32, shuffle=True)
 n_samples, n_features = dataset.x_train.shape
 
 
 model = NeuralNet(input_size=n_features, num_classes=1)
-learning_rate = 0.001
-optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=1e-4)
+learning_rate = 0.00001
+optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=1e-5)
 criterion = nn.MSELoss()
 scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=5, factor=0.5)
 
@@ -155,7 +165,7 @@ torch.jit.script(norm_module).save(save_path + "/normalization.pt")
 
 # Training loop with early stopping
 best_val_loss = float('inf')
-patience = 50
+patience = 20
 patience_counter = 0
 grad_clip = 1.0
 
@@ -190,5 +200,5 @@ for epoch in range(num_epochs):
             print("Early stopping triggered")
             break
             
-        if (epoch + 1) % 10 == 0:
-            print(f'Epoch: {epoch+1}, Train Loss: {loss:.6f}, Val Loss: {val_loss:.6f}')
+        print(f'Epoch: {epoch+1}, Train Loss: {loss:.16f}, Val Loss: {val_loss:.16f}')
+            

@@ -123,6 +123,74 @@ void Grid::ComputeVolumeFractionsCurv(){
     }
 }
 
+void Grid::ComputeVolumeFractionsAI(){
+    if (points.size() == 0 || cells.size() == 0 || kd_trees.size() == 0 || model == nullptr) {
+        return;
+    }
+
+    for (int i = 0; i < cells.size(); i++) {
+        cell cell = cells[i];
+        double x_min = points[cell.indices[0]][0];
+        double x_max = points[cell.indices[1]][0];
+        double y_min = points[cell.indices[0]][1];
+        double y_max = points[cell.indices[2]][1];
+
+        double dx = x_max - x_min;
+        double dy = y_max - y_min;
+
+        vertex cell_center{(x_min + x_max) / 2, (y_min + y_max) / 2};
+        vertex P; 
+        double data[5];
+        kd_trees[0].Search(cell_center, P, data); // data constains derivative and curvature information
+        P[0] = (P[0] - x_min) / dx;
+        P[1] = (P[1] - y_min) / dy;
+        double dx_dt = data[0]/dx;
+        double dy_dt = data[1]/dy;
+        double dxx_dt = data[2]/dx;
+        double dyy_dt = data[3]/dy;
+        double K = (dx_dt*dyy_dt - dy_dt*dxx_dt) / pow(dx_dt*dx_dt + dy_dt*dy_dt, 1.5);
+        double norm = sqrt(dx_dt*dx_dt + dy_dt*dy_dt);
+        dx_dt /= norm;
+        dy_dt /= norm;
+
+        // First check if circle and box intersect at all
+        double R = fabs(1/K);
+        vertex normal{-dy_dt, dx_dt};
+        vertex C{(P[0]+R*normal[0]), (P[1]+R*normal[1])};
+
+        // check if (0,0), (1,0), (1,1), (0,1) are inside the circle
+        bool allInside = true;
+        bool allOutside = true;
+        vertex corners[4] = {{0.0, 0.0}, {1.0, 0.0}, {1.0, 1.0}, {0.0, 1.0}};
+        for (int i = 0; i < 4; i++) {
+            double dist = sqrt(pow(corners[i][0] - C[0], 2) + pow(corners[i][1] - C[1], 2));
+            if (dist > R) {
+                allInside = false;
+            } else {
+                allOutside = false;
+            }
+        }
+
+        if (allInside) {
+            cells[i].volfrac = 1.0;
+            continue;
+        }
+        if (allOutside) {
+            cells[i].volfrac = 0.0;
+            continue;
+        }
+
+        
+
+        //double volfrac = ComputeCircleBoxIntersection(C, R, 0.0, 1.0, 0.0, 1.0);
+        double volfrac = model->Predict(P[0], P[1], -dy_dt, dx_dt, fabs(K));
+        if (K<0){
+            volfrac = 1.0 - volfrac;
+        }
+        cells[i].volfrac = volfrac;
+    }
+}
+
 double Grid::ComputeTotalVolume(){
     double total_volume = 0.0;
     for (int i = 0; i < cells.size(); i++) {
