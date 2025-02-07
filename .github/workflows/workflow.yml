@@ -56,12 +56,12 @@ jobs:
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
       run: |
         source venv/bin/activate
-        cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DARG=20000 -DCMAKE_PREFIX_PATH=${VIRTUAL_ENV}/lib/python3.8/site-packages/torch/share/cmake/Torch
+        cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Release -DARG=20000 -DCMAKE_PREFIX_PATH=${VIRTUAL_ENV}/lib/python3.8/site-packages/torch/share/cmake/Torch
 
     - name: Build
       working-directory: ${{github.workspace}}
       # Build your program with the given configuration
-      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --parallel
+      run: cmake --build ${{github.workspace}}/build --parallel
 
     - name: Test
       working-directory: ${{github.workspace}}/build
