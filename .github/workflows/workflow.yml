@@ -22,9 +22,6 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Update submodules
-      run: git submodule update --init --recursive
-
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
@@ -40,6 +37,18 @@ jobs:
         pip install numpy
         pip install torch==2.3.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
         pip install scikit-learn\
+
+    - name: Clone and Install GoogleTest
+      run: |
+        git clone https://github.com/google/googletest.git -b release-1.12.1
+        cd googletest
+        mkdir build
+        cd build
+        cmake ..
+        make
+        sudo make install
+        cd ../..
+        rm -rf googletest
 
     - name: Configure CMake
       working-directory: ${{github.workspace}}

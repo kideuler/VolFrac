@@ -8,7 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 enable_testing()
 include(CTest)
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/googletest)
+find_package(GTest REQUIRED)
 include(GoogleTest)
 
 # Create a library from all .cpp and .hpp files
