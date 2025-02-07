@@ -38,9 +38,8 @@ jobs:
         source venv/bin/activate
         pip install --upgrade pip
         pip install numpy
-        pip install torch
-        pip install scikit-learn
-        pip install nvidia-pyindex
+        pip install torch==2.3.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
+        pip install scikit-learn\
 
     - name: Configure CMake
       working-directory: ${{github.workspace}}

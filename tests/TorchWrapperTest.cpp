@@ -2,7 +2,7 @@
 #include <gtest/gtest.h>
 
 TEST(TorchWrapperTest, Predict){
-    TorchWrapper model("../models/VolFrac.pt", "../models/normalization.pt");
+    TorchWrapper model("../../models/VolFrac.pt", "../../models/normalization.pt");
     double volfrac = model.Predict(0.5, 0.5, 0.0, 1.0, 0.001);
 
     double exact = 0.5;
