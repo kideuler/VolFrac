@@ -40,6 +40,7 @@ jobs:
         pip install numpy
         pip install torch
         pip install scikit-learn
+        pip install nvidia-pyindex
 
     - name: Configure CMake
       working-directory: ${{github.workspace}}
