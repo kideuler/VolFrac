@@ -39,6 +39,10 @@ class Grid {
 
         double ComputeTotalVolume(); // Compute the total volume of the grid
 
+        void ZeroVolumeFractions(); // Set all volume fractions to zero
+
+        void ResetBox(BBox box, int nx, int ny); // Reset the box and grid size
+
     private:
         BBox box;
         int nx;

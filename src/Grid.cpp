@@ -55,9 +55,9 @@ void Grid::ComputeVolumeFractions(int npaxis){
             }
         }
         
-        if (count == 0) {
+        if (count == 5) {
             cells[i].volfrac = 0.0;
-        } else if (count == 4) {
+        } else if (count == 6) {
             cells[i].volfrac = 1.0;
         } else {
             double total_points = double(npaxis*npaxis);
@@ -197,4 +197,35 @@ double Grid::ComputeTotalVolume(){
         total_volume += cells[i].volume * cells[i].volfrac;
     }
     return total_volume;
+}
+
+void Grid::ZeroVolumeFractions(){
+    for (int i = 0; i < cells.size(); i++) {
+        cells[i].volfrac = 0.0;
+    }
+}
+
+void Grid::ResetBox(BBox box, int nx, int ny){
+    points.clear();
+    cells.clear();
+    this->box = box;
+    this->nx = nx;
+    this->ny = ny;
+    this->dx = (box.x_max - box.x_min) / (nx-1);
+    this->dy = (box.y_max - box.y_min) / (ny-1);
+
+    // make a list of points
+    for (int j = 0; j < ny; j++) {
+        for (int i = 0; i < nx; i++) {
+            points.push_back({box.x_min + i*dx, box.y_min + j*dy});
+        }
+    }
+
+    // make list of cells
+    for (int j = 0; j < ny-1; j++) {
+        for (int i = 0; i < nx-1; i++) {
+            cell C{{i + j*nx, i+1 + j*nx, i+1 + (j+1)*nx, i + (j+1)*nx}, dx*dy, 0.0};
+            cells.push_back(C);
+        }
+    }
 }

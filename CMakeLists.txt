@@ -20,10 +20,13 @@ find_package(Torch REQUIRED)
 target_link_libraries(VolFrac PUBLIC ${TORCH_LIBRARIES})
 
 # Include directories
-target_include_directories(VolFrac PUBLIC src models)
+target_include_directories(VolFrac PUBLIC src models results)
 
 # Add testing
 add_subdirectory(tests)
 
 # Add data
 add_subdirectory(data)
+
+# Add results
+add_subdirectory(results)
