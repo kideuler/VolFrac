@@ -5,14 +5,20 @@
 const double pi = 3.14159265358979323846;
 using namespace std;
 
-int main(){
+int main(int argc, char** argv){
 
     TorchWrapper model("../../models/VolFrac.pt", "../../models/normalization.pt");
+
+    int np = 100;
+    if (argc > 1){
+        np = atoi(argv[1]);
+    }
     
     BBox box{0.3, 0.7, 0.3, 0.7};
-    Grid grid = CreateGrid(box, 5, 5, 0, 200);
+    Grid grid = CreateGrid(box, 5, 5, 0, np);
     grid.model = &model;
     vector<int> sizes = {32,64,128,256,512,1024};
+    vector<string> headers = {"Sizes","PIB 3", "PIB 5", "PIB 10", "OscCircle", "AI"};
     vector<vector<double>> data;
 
     auto start = std::chrono::high_resolution_clock::now();
@@ -27,6 +33,15 @@ int main(){
         // pib 3
         start = std::chrono::high_resolution_clock::now();
         grid.ComputeVolumeFractions(3);
+        end = std::chrono::high_resolution_clock::now();
+        duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+        seconds = duration.count() / 1000000.0;
+        row.push_back(seconds);
+        grid.ZeroVolumeFractions();
+
+        // pib 5
+        start = std::chrono::high_resolution_clock::now();
+        grid.ComputeVolumeFractions(5);
         end = std::chrono::high_resolution_clock::now();
         duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
         seconds = duration.count() / 1000000.0;
@@ -62,8 +77,13 @@ int main(){
 
         data.push_back(row);
 
-        std::cout << row[0] << " " << row[1] << " " << row[2] << " " << row[3] << " " << row[4] << std::endl;
+        std::cout << row[0] << " " << row[1] << " " << row[2] << " " << row[3] << " " << row[4] << " " << row[5] << std::endl;
     }
+
+    // np as string
+    string np_str = to_string(np);
+
+    WriteLatexTable("Timing_table_"+np_str+".tex", headers, data,"Timing data for volume fraction methods on ellipse in seconds. The ellipse is discretized with "+np_str+" points.");
 
     return 0;
 }

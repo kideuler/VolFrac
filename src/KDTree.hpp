@@ -3,6 +3,11 @@
 
 #include "IntervalTree.hpp"
 
+// Inline helper function to compute squared distance between two vertices.
+inline double squaredDistance(const vertex &a, const vertex &b) {
+    return (a[0]-b[0])*(a[0]-b[0]) + (a[1]-b[1])*(a[1]-b[1]);
+}
+
 template <short DATA_SIZE>
 class KDNode {
 public:
@@ -59,11 +64,7 @@ public:
             return;
         }
 
-        double distance = 0;
-        for (int i = 0; i < 2; i++) {
-            distance += (point[i] - P[i]) * (point[i] - P[i]);
-        }
-
+        double distance = squaredDistance(point, P);
         if (distance < best_radius) {
             best_radius = distance;
             best_point = point;
@@ -73,19 +74,20 @@ public:
         }
 
         unsigned int axis = depth % 2;
+        double axis_diff_sq = (point[axis] - P[axis]) * (point[axis] - P[axis]);
 
         if (P[axis] < point[axis]) {
             if (left != nullptr) {
                 left->Search_Down(P, best_radius, best_point, best_data);
             }
-            if (right != nullptr && (point[axis] - P[axis]) * (point[axis] - P[axis]) < best_radius) {
+            if (right != nullptr && axis_diff_sq < best_radius) {
                 right->Search_Down(P, best_radius, best_point, best_data);
             }
         } else {
             if (right != nullptr) {
                 right->Search_Down(P, best_radius, best_point, best_data);
             }
-            if (left != nullptr && (point[axis] - P[axis]) * (point[axis] - P[axis]) < best_radius) {
+            if (left != nullptr && axis_diff_sq < best_radius) {
                 left->Search_Down(P, best_radius, best_point, best_data);
             }
         }
@@ -116,31 +118,30 @@ public:
 
 template <short DATA_SIZE>
 class KDTree {
-    public :
-        KDTree() : root(nullptr) {} // Default constructor
-        KDNode<DATA_SIZE>* root;
+public:
+    KDTree() : root(nullptr) {} // Default constructor
+    KDNode<DATA_SIZE>* root;
 
-        void Insert(vertex P, double data[DATA_SIZE]) {
-            if (root == nullptr) {
-                root = new KDNode<DATA_SIZE>();
-            }
-            root->Insert(P, data, 0);
+    void Insert(vertex P, double data[DATA_SIZE]) {
+        if (root == nullptr) {
+            root = new KDNode<DATA_SIZE>();
         }
+        root->Insert(P, data, 0);
+    }
 
-        void Search(vertex P, vertex &best_point, double *best_data) {
-            if (root == nullptr) {
-                return;
-            }
-
-            double best_radius = 1e34;
-            root->Search_Down(P, best_radius, best_point, best_data);
+    void Search(vertex P, vertex &best_point, double *best_data) {
+        if (root == nullptr) {
+            return;
         }
+        double best_radius = 1e34;
+        root->Search_Down(P, best_radius, best_point, best_data);
+    }
 
-        void Print() {
-            if (root != nullptr) {
-                root->Print();
-            }
+    void Print() {
+        if (root != nullptr) {
+            root->Print();
         }
+    }
 };
 
 #endif // __KDTREE_HPP__

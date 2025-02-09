@@ -9,10 +9,21 @@ target_link_libraries(Timing_test PRIVATE VolFrac)
 
 # Add custom command to run results with an argument
 add_custom_target(results
-    # COMMAND ${CMAKE_CURRENT_BINARY_DIR}/Accuracy_test 0 && ${CMAKE_CURRENT_BINARY_DIR}/Accuracy_test 1 && ${CMAKE_CURRENT_BINARY_DIR}/Accuracy_test 2
-    # COMMAND ${CMAKE_CURRENT_BINARY_DIR}/Accuracy_line_test
-    COMMAND ${CMAKE_CURRENT_BINARY_DIR}/Timing_test
-    DEPENDS Accuracy_test
+    COMMAND echo "Running Accuracy test on Ellipse"
+    && ${CMAKE_CURRENT_BINARY_DIR}/Accuracy_test 0 
+    && echo "Running Accuracy test on Flower"
+    && ${CMAKE_CURRENT_BINARY_DIR}/Accuracy_test 1 
+    && echo "Running Accuracy test on Petals"
+    && ${CMAKE_CURRENT_BINARY_DIR}/Accuracy_test 2
+    && echo "Running Accuracy test on Line"
+    && ${CMAKE_CURRENT_BINARY_DIR}/Accuracy_line_test
+    && echo "Running Timing test on 100 point Ellipse"
+    && ${CMAKE_CURRENT_BINARY_DIR}/Timing_test
+    && echo "Running Timing test on 1000 point Ellipse"
+    && ${CMAKE_CURRENT_BINARY_DIR}/Timing_test 1000
+    && echo "Running Timing test on 5000 point Ellipse"
+    && ${CMAKE_CURRENT_BINARY_DIR}/Timing_test 5000
+    DEPENDS Accuracy_test Accuracy_line_test Timing_test
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     COMMENT "Running tests to generate results"
 )

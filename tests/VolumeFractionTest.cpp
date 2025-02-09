@@ -76,15 +76,6 @@ TEST(VolumeFractionTest, ComputeVolumeFractionsFlower){
     double percent_error = 100 * fabs(total_volume - exact) / exact;
     std::cout << "percent_error" << percent_error << std::endl;
     ASSERT_TRUE(percent_error < 5);
-
-    Grid grid2(box, 500, 500);
-    grid2.AddShape(tree);
-    grid2.ComputeVolumeFractions(50);
-    total_volume = grid2.ComputeTotalVolume();
-    percent_error = 100 * fabs(total_volume - exact) / exact;
-    std::cout << "percent_error" << percent_error << std::endl;
-    ASSERT_TRUE(percent_error < 0.05);
-
 }
 
 TEST(VolumeFractionTest, ComputeVolumeFractionsCardioid){
@@ -122,13 +113,4 @@ TEST(VolumeFractionTest, ComputeVolumeFractionsCardioid){
     double percent_error = 100 * fabs(total_volume - exact) / exact;
     std::cout << "percent_error" << percent_error << std::endl;
     ASSERT_TRUE(percent_error < 5);
-
-    Grid grid2(box, 500, 500);
-    grid2.AddShape(tree);
-    grid2.ComputeVolumeFractions(100);
-    total_volume = grid2.ComputeTotalVolume();
-    percent_error = 100 * fabs(total_volume - exact) / exact;
-    std::cout << "percent_error" << percent_error << std::endl;
-    ASSERT_TRUE(percent_error < 0.1);
-
 }

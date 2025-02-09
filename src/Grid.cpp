@@ -89,31 +89,13 @@ void Grid::ComputeVolumeFractionsCurv(){
         vertex P; 
         double data[5];
         kd_trees[0].Search(cell_center, P, data); // data constains derivative and curvature information
-        P[0] = (P[0] - x_min) / dx;
-        P[1] = (P[1] - y_min) / dy;
-        double dx_dt = data[0]/dx;
-        double dy_dt = data[1]/dy;
-        double dxx_dt = data[2]/dx;
-        double dyy_dt = data[3]/dy;
-        double K = (dx_dt*dyy_dt - dy_dt*dxx_dt) / pow(dx_dt*dx_dt + dy_dt*dy_dt, 1.5);
-        if (fabs(K) > maxK) {
-            maxK = fabs(K);
-        }
-        double R = fabs(1/K);
-        double norm = sqrt(dx_dt*dx_dt + dy_dt*dy_dt);
-        dx_dt /= norm;
-        dy_dt /= norm;
-        vertex normal{-dy_dt, dx_dt};
-        vertex C{(P[0]+R*normal[0]), (P[1]+R*normal[1])};
+        double R = fabs(1.0/data[4]);
+        vertex C{(P[0]-R*data[1]), (P[1]+R*data[0])};
 
-        double area = ComputeCircleBoxIntersection(C, R, 0.0, 1.0, 0.0, 1.0);
+        double area = ComputeCircleBoxIntersection(C, R, x_min, x_max, y_min, y_max);
 
-        double volfrac = area;
-        if (K<0){
-            volfrac = 1.0 - volfrac;
-        }
-
-        cells[i].volfrac = area;
+        double volfrac = area/cell.volume;
+        cells[i].volfrac = area/cell.volume;
     }
 }
 
