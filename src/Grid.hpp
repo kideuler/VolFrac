@@ -19,6 +19,7 @@ struct cell {
     array<int,4> indices;
     double volume;
     double volfrac;
+    vector<int> point_indices;
 };
 
 class Grid {
