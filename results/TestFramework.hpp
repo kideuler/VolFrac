@@ -3,11 +3,11 @@
 
 #include "Grid.hpp"
 
-Grid CreateGrid(BBox box, int nx, int ny, int shape_type) {
+Grid CreateGrid(BBox box, int nx, int ny, int shape_type, int nsegs = 10000) {
     Grid grid(box, nx, ny);
 
     const double pi = 3.14159265358979323846;
-    const int num_segments = 10000;
+    const int num_segments = nsegs;
     if (shape_type>2){
         return grid;
     }

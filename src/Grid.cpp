@@ -55,23 +55,17 @@ void Grid::ComputeVolumeFractions(int npaxis){
             }
         }
         
-        if (count == 5) {
-            cells[i].volfrac = 0.0;
-        } else if (count == 6) {
-            cells[i].volfrac = 1.0;
-        } else {
-            double total_points = double(npaxis*npaxis);
-            int fine_count = 0;
-            for (int j = 0; j < npaxis; j++) {
-                for (int k = 0; k < npaxis; k++) {
-                    vertex P = {points[cells[i].indices[0]][0] + k*dx_in, points[cells[i].indices[0]][1] + j*dy_in};
-                    if (shapes[0].QueryPoint(P) % 2 == 1) {
-                        fine_count++;
-                    }
+    double total_points = double(npaxis*npaxis);
+        int fine_count = 0;
+        for (int j = 0; j < npaxis; j++) {
+            for (int k = 0; k < npaxis; k++) {
+                vertex P = {points[cells[i].indices[0]][0] + k*dx_in, points[cells[i].indices[0]][1] + j*dy_in};
+                if (shapes[0].QueryPoint(P) % 2 == 1) {
+                    fine_count++;
                 }
             }
-            cells[i].volfrac = double(fine_count) / total_points;
         }
+        cells[i].volfrac = double(fine_count) / total_points;
     }
 }
 
