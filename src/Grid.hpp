@@ -4,7 +4,10 @@
 #include "IntervalTree.hpp"
 #include "KDTree.hpp"
 #include "CircleVolFrac.hpp"
+
+#ifdef USE_TORCH
 #include "TorchWrapper.hpp"
+#endif
 
 using namespace std;
 
@@ -20,6 +23,7 @@ struct cell {
     double volume;
     double volfrac;
     vector<int> point_indices;
+    bool crosses_boundary = false;
 };
 
 class Grid {
@@ -32,12 +36,15 @@ class Grid {
 
         void AddTree(const KDTree<5> &tree); // Add a kdtre if point data to the grid
 
+        void AddCoordinates(const coords &coordinates); // Add coordinates to the grid
+
         void ComputeVolumeFractions(int npaxis); // Compute the volume fractions of the cells
 
         void ComputeVolumeFractionsCurv(); // Compute the volume fractions of the cells using circle method
 
+#ifdef USE_TORCH
         void ComputeVolumeFractionsAI(); // Compute the volume fractions of the cells using Neural Network model
-
+#endif
         double ComputeTotalVolume(); // Compute the total volume of the grid
 
         void ZeroVolumeFractions(); // Set all volume fractions to zero
@@ -50,14 +57,20 @@ class Grid {
         int ny;
         double dx;
         double dy;
+        int ncellsx;
+        int ncellsy;
+        int first_cell_index = 0;
         vector<IntervalTree<Axis::Y>> shapes;
         vector<KDTree<5>> kd_trees;
         vector<bool> inflags;
+        coords coordinates;
 
     public:
         vector<vertex> points;
         vector<cell> cells;
+#ifdef USE_TORCH
         TorchWrapper *model = nullptr;
+#endif
 };
 
 #endif

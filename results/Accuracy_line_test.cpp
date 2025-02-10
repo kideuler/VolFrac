@@ -7,8 +7,11 @@ using namespace std;
 int main(){
     int nruns = 100000;
 
+#ifdef USE_TORCH
     TorchWrapper model("../../models/VolFrac.pt", "../../models/normalization.pt");
-
+#else
+    std::cout << "Torch not enabled" << std::endl;
+#endif
     double x1 = 0.0; double x2 = 1.0;
 
     vector<double> totals = {0.0, 0.0, 0.0, 0.0};
@@ -32,8 +35,12 @@ int main(){
 
         double k = 1e-5; // approximate curvature
 
+#ifdef USE_TORCH
         // Use the AI method to predict the volume fraction
         double volfracAI = 1.0-model.Predict(P[0], P[1], normal[0], normal[1], k);
+#else
+        double volfracAI = 0.0;
+#endif
         
         // Use Osculating Circle method to compute the exact volume fraction
         vertex C({P[0] + (1.0/k)*normal[0], P[1] + (1.0/k)*normal[1]});

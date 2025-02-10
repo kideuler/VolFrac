@@ -7,7 +7,11 @@ using namespace std;
 
 int main(int argc, char** argv){
 
+#ifdef USE_TORCH
     TorchWrapper model("../../models/VolFrac.pt", "../../models/normalization.pt");
+#else
+    std::cout << "Torch not enabled" << std::endl;
+#endif
 
     int np = 100;
     if (argc > 1){
@@ -16,7 +20,9 @@ int main(int argc, char** argv){
     
     BBox box{0.3, 0.7, 0.3, 0.7};
     Grid grid = CreateGrid(box, 5, 5, 0, np);
+#ifdef USE_TORCH
     grid.model = &model;
+#endif
     vector<int> sizes = {32,64,128,256,512,1024};
     vector<string> headers = {"Sizes","PIB 3", "PIB 5", "PIB 10", "OscCircle", "AI"};
     vector<vector<double>> data;
@@ -67,6 +73,7 @@ int main(int argc, char** argv){
         grid.ZeroVolumeFractions();
 
         // AI method
+#ifdef USE_TORCH
         start = std::chrono::high_resolution_clock::now();
         grid.ComputeVolumeFractionsAI();
         end = std::chrono::high_resolution_clock::now();
@@ -74,7 +81,7 @@ int main(int argc, char** argv){
         seconds = duration.count() / 1000000.0;
         row.push_back(seconds);
         grid.ZeroVolumeFractions();
-
+#endif
         data.push_back(row);
 
         std::cout << row[0] << " " << row[1] << " " << row[2] << " " << row[3] << " " << row[4] << " " << row[5] << std::endl;

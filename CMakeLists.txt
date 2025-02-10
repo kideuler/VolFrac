@@ -16,8 +16,11 @@ file(GLOB_RECURSE SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/models/*.hpp")
 add_library(VolFrac SHARED ${SOURCES})
 
-find_package(Torch REQUIRED)
-target_link_libraries(VolFrac PUBLIC ${TORCH_LIBRARIES})
+# add torch if USE_TORCH is set to true
+if(USE_TORCH)
+  find_package(Torch REQUIRED)
+  target_link_libraries(VolFrac PUBLIC ${TORCH_LIBRARIES})
+endif()
 
 # Include directories
 target_include_directories(VolFrac PUBLIC src models results)

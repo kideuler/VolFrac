@@ -4,6 +4,8 @@ Grid::Grid(BBox box, int nx, int ny){
     this->box = box;
     this->nx = nx;
     this->ny = ny;
+    this->ncellsx = nx-1;
+    this->ncellsy = ny-1;
     this->dx = (box.x_max - box.x_min) / (nx-1);
     this->dy = (box.y_max - box.y_min) / (ny-1);
 
@@ -29,6 +31,26 @@ void Grid::AddShape(const IntervalTree<Axis::Y> &bdy){
 
 void Grid::AddTree(const KDTree<5> &tree) {
     kd_trees.push_back(tree);
+}
+
+void Grid::AddCoordinates(const coords &coordinates){
+    this->coordinates = coordinates;
+
+    // for each coordinate, find the cell it is in and add the index to the cell, switch the crosses_boundary to true
+    for (int i = 0; i < coordinates.size(); i++) {
+        // determine which cell the coordinate is in
+        int x_index = (int) (coordinates[i][0] - box.x_min) / dx;
+        int y_index = (int) (coordinates[i][1] - box.y_min) / dy;
+
+        // determine the index of the cell
+        int cell_index = x_index + y_index*ncellsx;
+
+        // add the index to the cell
+        cells[cell_index].point_indices.push_back(i);
+        cells[cell_index].crosses_boundary = true;
+
+        if (i == 0){first_cell_index = cell_index;}
+    }
 }
 
 void Grid::ComputeVolumeFractions(int npaxis){
@@ -99,6 +121,7 @@ void Grid::ComputeVolumeFractionsCurv(){
     }
 }
 
+#ifdef USE_TORCH
 void Grid::ComputeVolumeFractionsAI(){
     if (points.size() == 0 || cells.size() == 0 || kd_trees.size() == 0 || model == nullptr) {
         return;
@@ -166,6 +189,7 @@ void Grid::ComputeVolumeFractionsAI(){
         cells[i].volfrac = volfrac;
     }
 }
+#endif
 
 double Grid::ComputeTotalVolume(){
     double total_volume = 0.0;

@@ -1,3 +1,4 @@
+#ifdef USE_TORCH
 #include "TorchWrapper.hpp"
 
 TorchWrapper::TorchWrapper(std::string model_path, std::string norm_path) {
@@ -30,3 +31,5 @@ double TorchWrapper::Predict(double x, double y, double nx, double ny, double K)
     at::Tensor output = module.forward(inputs).toTensor();
     return output[0][0].item<double>() * y_std + y_mean;
 }
+
+#endif
