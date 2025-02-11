@@ -56,7 +56,7 @@ jobs:
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
       run: |
         source venv/bin/activate
-        cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Debug -DARG=20000
+        cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Release -DARG=20000
 
     - name: Build
       working-directory: ${{github.workspace}}
