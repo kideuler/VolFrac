@@ -25,7 +25,7 @@ Grid::Grid(BBox box, int nx, int ny){
     }
 }
 
-void Grid::AddShape(const IntervalTree<Axis::Y> &bdy){
+void Grid::AddShape(IntervalTree<Axis::Y> &bdy){
     shapes.push_back(bdy);
 
     int npoints = nx*ny;

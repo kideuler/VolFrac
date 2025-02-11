@@ -33,7 +33,7 @@ class Grid {
 
         Grid(BBox box, int nx, int ny); // Constructor
 
-        void AddShape(const IntervalTree<Axis::Y> &bdy); // Add a shape to the grid
+        void AddShape(IntervalTree<Axis::Y> &bdy); // Add a shape to the grid
 
         void AddTree(const KDTree<5> &tree); // Add a kdtre if point data to the grid
 
