@@ -24,6 +24,7 @@ struct cell {
     double volfrac;
     vector<int> point_indices;
     bool crosses_boundary = false;
+    int closest_center = -1;
 };
 
 class Grid {

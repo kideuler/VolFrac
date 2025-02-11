@@ -30,9 +30,19 @@ TEST(VolumeFractionCurveTest, ComputeVolumeFractionsCircle){
         tree.Insert(P, arr);
     }
 
+    // Create segment ids for the unit circle
+    segment_ids segments;
+    for (int i = 0; i < num_segments; ++i) {
+        segments.push_back({i, (i + 1) % num_segments});
+    }
+
+    // Create the IntervalTree
+    IntervalTree<Axis::Y> shape(segments, coordinates);
+
     BBox box{-0.01, 1.01, -0.01, 1.01};
     Grid grid(box, 100, 100);
     grid.AddTree(tree);
+    grid.AddShape(shape);
 
     grid.ComputeVolumeFractionsCurv();
 
@@ -74,9 +84,19 @@ TEST(VolumeFractionCurveTest, ComputeVolumeFractionsEllipse){
         tree.Insert(P, arr);
     }
 
+    // Create segment ids for the unit circle
+    segment_ids segments;
+    for (int i = 0; i < num_segments; ++i) {
+        segments.push_back({i, (i + 1) % num_segments});
+    }
+
+    // Create the IntervalTree
+    IntervalTree<Axis::Y> shape(segments, coordinates);
+
     BBox box{-0.01, 1.01, -0.01, 1.01};
     Grid grid(box, 100, 100);
     grid.AddTree(tree);
+    grid.AddShape(shape);
 
     grid.ComputeVolumeFractionsCurv();
 
@@ -117,9 +137,19 @@ TEST(VolumeFractionCurveTest, ComputeVolumeFractionsFlower){
         tree.Insert(P, arr);
     }
 
+    // Create segment ids for the unit circle
+    segment_ids segments;
+    for (int i = 0; i < num_segments; ++i) {
+        segments.push_back({i, (i + 1) % num_segments});
+    }
+
+    // Create the IntervalTree
+    IntervalTree<Axis::Y> shape(segments, coordinates);
+
     BBox box{-0.01, 1.01, -0.01, 1.01};
     Grid grid(box, 130, 200);
     grid.AddTree(tree);
+    grid.AddShape(shape);
 
     grid.ComputeVolumeFractionsCurv();
 

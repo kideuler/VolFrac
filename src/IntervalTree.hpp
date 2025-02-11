@@ -144,7 +144,12 @@ public:
 template <short T>
 class IntervalTree {
     public:
+        segment_ids seg_ids;
+        coords coordinates;
+
         IntervalTree(segment_ids segs, coords coordinates){
+            this->seg_ids = segs;
+            this->coordinates = coordinates;
             int nsegments = segs.size();
             this->segments.resize(nsegments);
             for (int i = 0; i<nsegments; i++){

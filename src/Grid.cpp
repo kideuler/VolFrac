@@ -27,6 +27,86 @@ Grid::Grid(BBox box, int nx, int ny){
 
 void Grid::AddShape(const IntervalTree<Axis::Y> &bdy){
     shapes.push_back(bdy);
+
+    int npoints = nx*ny;
+    inflags.resize(npoints, false);
+
+    // determine which points are inside the shapes
+    for (int i = 0; i < npoints; i++) {
+        inflags[i] = shapes[0].QueryPoint(points[i]) % 2 == 1;
+    }
+
+    for (int i = 0; i < shapes[0].seg_ids.size(); i++) {
+        int v1 = shapes[0].seg_ids[i][0];
+        int v2 = shapes[0].seg_ids[i][1];
+
+        vertex P1 = shapes[0].coordinates[v1];
+        vertex P2 = shapes[0].coordinates[v2];
+
+        // find cell index that contains P1 and P2
+        int i1 = int((P1[0] - box.x_min) / dx);
+        int j1 = int((P1[1] - box.y_min) / dy);
+        int c1 = i1 + j1*(nx-1);
+        int i2 = int((P2[0] - box.x_min) / dx);
+        int j2 = int((P2[1] - box.y_min) / dy);
+        int c2 = i2 + j2*(nx-1);
+
+        cells[c1].crosses_boundary = true;
+        cells[c2].crosses_boundary = true;
+
+        // get all cells that the line between P1 and P2 crosses
+        int x1 = i1, y1 = j1;
+        int x2 = i2, y2 = j2;
+        int dx_line = abs(x2 - x1);
+        int dy_line = abs(y2 - y1);
+        int sx = (x1 < x2) ? 1 : -1;
+        int sy = (y1 < y2) ? 1 : -1;
+        int err = dx_line - dy_line;
+
+        int x = x1, y = y1;
+        while (true) {
+            int cell_index = x + y*(nx-1);
+            cells[cell_index].crosses_boundary = true;
+            if (x == x2 && y == y2)
+                break;
+            int e2 = 2 * err;
+            if (e2 > -dy_line) {
+                err -= dy_line;
+                x += sx;
+            }
+            if (e2 < dx_line) {
+                err += dx_line;
+                y += sy;
+            }
+        }
+    }
+
+    // loop through all cells and add adjacent cells to cross boundary true
+    vector<bool> visited(cells.size(), false);
+    for (int i = 0; i < cells.size(); i++) {
+        if (cells[i].crosses_boundary) {
+            int x = i % (nx-1);
+            int y = i / (nx-1);
+            if (x > 0) {
+                visited[i-1] = true;
+            }
+            if (x < nx-2) {
+                visited[i+1] = true;
+            }
+            if (y > 0) {
+                visited[i-(nx-1)] = true;
+            }
+            if (y < ny-2) {
+                visited[i+(nx-1)] = true;
+            }
+        }
+    }
+
+    for (int i = 0; i < cells.size(); i++) {
+        if (visited[i]) {
+            cells[i].crosses_boundary = true;
+        }
+    }
 }
 
 void Grid::AddTree(const KDTree<5> &tree) {
@@ -36,14 +116,6 @@ void Grid::AddTree(const KDTree<5> &tree) {
 void Grid::ComputeVolumeFractions(){
     if (shapes.size() == 0 || points.size() == 0 || cells.size() == 0) {
         return;
-    }
-
-    int npoints = nx*ny;
-    inflags.resize(npoints, false);
-
-    // determine which points are inside the shapes
-    for (int i = 0; i < npoints; i++) {
-        inflags[i] = shapes[0].QueryPoint(points[i]) % 2 == 1;
     }
 
     int count = 0;
@@ -70,26 +142,23 @@ void Grid::ComputeVolumeFractions(int npaxis){
         return;
     }
 
-    int npoints = nx*ny;
-    inflags.resize(npoints, false);
-
-    // determine which points are inside the shapes
-    for (int i = 0; i < npoints; i++) {
-        inflags[i] = shapes[0].QueryPoint(points[i]) % 2 == 1;
-    }
-
     // compute the volume fractions
     double dx_in = dx / (npaxis-1);
     double dy_in = dy / (npaxis-1);
     for (int i = 0; i < cells.size(); i++) {
-        int count = 0;
-        for (int j = 0; j < 4; j++) {
-            if (inflags[cells[i].indices[j]]) {
-                count++;
+
+        if (!cells[i].crosses_boundary) {
+            int count = 0;
+            for (int j = 0; j < 4; j++) {
+                if (inflags[cells[i].indices[j]]) {
+                    count++;
+                }
             }
+            cells[i].volfrac = double(count) / 4.0;
+            continue;
         }
         
-    double total_points = double(npaxis*npaxis);
+        double total_points = double(npaxis*npaxis);
         int fine_count = 0;
         for (int j = 0; j < npaxis; j++) {
             for (int k = 0; k < npaxis; k++) {
@@ -110,6 +179,17 @@ void Grid::ComputeVolumeFractionsCurv(){
 
     double maxK = -1e34;
     for (int i = 0; i < cells.size(); i++) {
+        if (!cells[i].crosses_boundary) {
+            int count = 0;
+            for (int j = 0; j < 4; j++) {
+                if (inflags[cells[i].indices[j]]) {
+                    count++;
+                }
+            }
+            cells[i].volfrac = double(count) / 4.0;
+            continue;
+        }
+
         cell cell = cells[i];
         double x_min = points[cell.indices[0]][0];
         double x_max = points[cell.indices[1]][0];
@@ -140,6 +220,16 @@ void Grid::ComputeVolumeFractionsAI(){
     }
 
     for (int i = 0; i < cells.size(); i++) {
+        if (!cells[i].crosses_boundary) {
+            int count = 0;
+            for (int j = 0; j < 4; j++) {
+                if (inflags[cells[i].indices[j]]) {
+                    count++;
+                }
+            }
+            cells[i].volfrac = double(count) / 4.0;
+            continue;
+        }
         cell cell = cells[i];
         double x_min = points[cell.indices[0]][0];
         double x_max = points[cell.indices[1]][0];
@@ -168,30 +258,6 @@ void Grid::ComputeVolumeFractionsAI(){
         double R = fabs(1/K);
         vertex normal{-dy_dt, dx_dt};
         vertex C{(P[0]+R*normal[0]), (P[1]+R*normal[1])};
-
-        // check if (0,0), (1,0), (1,1), (0,1) are inside the circle
-        bool allInside = true;
-        bool allOutside = true;
-        vertex corners[4] = {{0.0, 0.0}, {1.0, 0.0}, {1.0, 1.0}, {0.0, 1.0}};
-        for (int i = 0; i < 4; i++) {
-            double dist = sqrt(pow(corners[i][0] - C[0], 2) + pow(corners[i][1] - C[1], 2));
-            if (dist > R) {
-                allInside = false;
-            } else {
-                allOutside = false;
-            }
-        }
-
-        if (allInside) {
-            cells[i].volfrac = 1.0;
-            continue;
-        }
-        if (allOutside) {
-            cells[i].volfrac = 0.0;
-            continue;
-        }
-
-        
 
         //double volfrac = ComputeCircleBoxIntersection(C, R, 0.0, 1.0, 0.0, 1.0);
         double volfrac = model->Predict(P[0], P[1], -dy_dt, dx_dt, fabs(K));
@@ -238,6 +304,88 @@ void Grid::ResetBox(BBox box, int nx, int ny){
         for (int i = 0; i < nx-1; i++) {
             cell C{{i + j*nx, i+1 + j*nx, i+1 + (j+1)*nx, i + (j+1)*nx}, dx*dy, 0.0};
             cells.push_back(C);
+        }
+    }
+
+    if (shapes.size() > 0) {
+        int npoints = nx*ny;
+        inflags.resize(npoints, false);
+
+        // determine which points are inside the shapes
+        for (int i = 0; i < npoints; i++) {
+            inflags[i] = shapes[0].QueryPoint(points[i]) % 2 == 1;
+        }
+
+        for (int i = 0; i < shapes[0].seg_ids.size(); i++) {
+            int v1 = shapes[0].seg_ids[i][0];
+            int v2 = shapes[0].seg_ids[i][1];
+
+            vertex P1 = shapes[0].coordinates[v1];
+            vertex P2 = shapes[0].coordinates[v2];
+
+            // find cell index that contains P1 and P2
+            int i1 = int((P1[0] - box.x_min) / dx);
+            int j1 = int((P1[1] - box.y_min) / dy);
+            int c1 = i1 + j1*(nx-1);
+            int i2 = int((P2[0] - box.x_min) / dx);
+            int j2 = int((P2[1] - box.y_min) / dy);
+            int c2 = i2 + j2*(nx-1);
+
+            cells[c1].crosses_boundary = true;
+            cells[c2].crosses_boundary = true;
+
+            // get all cells that the line between P1 and P2 crosses
+            int x1 = i1, y1 = j1;
+            int x2 = i2, y2 = j2;
+            int dx_line = abs(x2 - x1);
+            int dy_line = abs(y2 - y1);
+            int sx = (x1 < x2) ? 1 : -1;
+            int sy = (y1 < y2) ? 1 : -1;
+            int err = dx_line - dy_line;
+
+            int x = x1, y = y1;
+            while (true) {
+                int cell_index = x + y*(nx-1);
+                cells[cell_index].crosses_boundary = true;
+                if (x == x2 && y == y2)
+                    break;
+                int e2 = 2 * err;
+                if (e2 > -dy_line) {
+                    err -= dy_line;
+                    x += sx;
+                }
+                if (e2 < dx_line) {
+                    err += dx_line;
+                    y += sy;
+                }
+            }
+        }
+
+        // loop through all cells and add adjacent cells to cross boundary true
+        vector<bool> visited(cells.size(), false);
+        for (int i = 0; i < cells.size(); i++) {
+            if (cells[i].crosses_boundary) {
+                int x = i % (nx-1);
+                int y = i / (nx-1);
+                if (x > 0) {
+                    visited[i-1] = true;
+                }
+                if (x < nx-2) {
+                    visited[i+1] = true;
+                }
+                if (y > 0) {
+                    visited[i-(nx-1)] = true;
+                }
+                if (y < ny-2) {
+                    visited[i+(nx-1)] = true;
+                }
+            }
+        }
+
+        for (int i = 0; i < cells.size(); i++) {
+            if (visited[i]) {
+                cells[i].crosses_boundary = true;
+            }
         }
     }
 }
