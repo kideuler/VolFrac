@@ -49,14 +49,14 @@ public:
     vector<double> off_low;
     double center;
 
-    ~IntervalNode() {
-        if (left != nullptr) {
-            delete left;
-        }
-        if (right != nullptr) {
-            delete right;
-        }
-    }
+    // ~IntervalNode() {
+    //     if (left != nullptr) {
+    //         delete left;
+    //     }
+    //     if (right != nullptr) {
+    //         delete right;
+    //     }
+    // }
 
     void Construct(){
         if (segments.empty()) {

@@ -90,13 +90,13 @@ void Grid::AddShape(const IntervalTree<Axis::Y> &bdy){
             if (x > 0) {
                 visited[i-1] = true;
             }
-            if (x < nx-2) {
+            if (x < nx-1) {
                 visited[i+1] = true;
             }
             if (y > 0) {
                 visited[i-(nx-1)] = true;
             }
-            if (y < ny-2) {
+            if (y < ny-1) {
                 visited[i+(nx-1)] = true;
             }
         }
