@@ -30,13 +30,19 @@ int main(int argc, char** argv) {
     for (int size : sizes) {
         sizes_str.push_back(to_string(size));
     }
-    vector<string> headers = {"Sizes","PIB 3", "PIB 10", "OscCircle", "AI"};
+    vector<string> headers = {"Sizes","Cross","PIB 3", "PIB 10", "OscCircle", "AI"};
     vector<vector<double>> data;
     double result;
     for (int i = 0; i < sizes.size(); i++) {
         vector<double> row;
         grid.ResetBox(box, sizes[i], sizes[i]);
         row.push_back(sizes[i]);
+
+        // cross
+        grid.ComputeVolumeFractions();
+        result = 100.0*fabs(grid.ComputeTotalVolume() - exact) / exact;
+        row.push_back(result);
+        grid.ZeroVolumeFractions();
 
         // pib 3
         grid.ComputeVolumeFractions(3);
@@ -66,7 +72,7 @@ int main(int argc, char** argv) {
         data.push_back(row);
 
         // print the row
-        cout << row[0] << " " << row[1] << " " << row[2] << " " << row[3] << " " << row[4] << endl;
+        cout << row[0] << " " << row[1] << " " << row[2] << " " << row[3] << " " << row[4] << " " << row[5] << endl;
     }
 
     WriteLatexTable("AccuracyTable_"+shape_names[shape]+".tex", headers, data, "Accuracy of Volume Fraction Methods on "+shape_names[shape]+" in terms of percent error of total volume");

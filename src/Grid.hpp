@@ -36,7 +36,7 @@ class Grid {
 
         void AddTree(const KDTree<5> &tree); // Add a kdtre if point data to the grid
 
-        void AddCoordinates(const coords &coordinates); // Add coordinates to the grid
+        void ComputeVolumeFractions(); // Compute the volume fractions of the cells using zero order method
 
         void ComputeVolumeFractions(int npaxis); // Compute the volume fractions of the cells
 
@@ -63,7 +63,6 @@ class Grid {
         vector<IntervalTree<Axis::Y>> shapes;
         vector<KDTree<5>> kd_trees;
         vector<bool> inflags;
-        coords coordinates;
 
     public:
         vector<vertex> points;
