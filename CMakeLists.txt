@@ -16,6 +16,14 @@ file(GLOB_RECURSE SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/models/*.hpp")
 add_library(VolFrac SHARED ${SOURCES})
 
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  target_compile_options(VolFrac PRIVATE
+    "-Wall"
+    "-Wextra"
+    "-Wpedantic"
+  )
+endif()
+
 # add torch if USE_TORCH is set to true
 if(USE_TORCH)
   find_package(Torch REQUIRED)

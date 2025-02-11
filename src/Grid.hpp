@@ -22,7 +22,6 @@ struct cell {
     array<int,4> indices;
     double volume;
     double volfrac;
-    vector<int> point_indices;
     bool crosses_boundary = false;
     int closest_center = -1;
 };

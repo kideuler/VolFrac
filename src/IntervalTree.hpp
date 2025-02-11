@@ -123,7 +123,7 @@ public:
 
         // Check if the point is in the node
         int count = 0;
-        for (int i = 0; i < low.size(); i++) {
+        for (unsigned long i = 0; i < low.size(); i++) {
             if (low[i] < P[T] && P[T] <= high[i] && P[1-T] < off_low[i]) {
                 count++;
             }

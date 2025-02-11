@@ -17,7 +17,7 @@ public:
     KDNode* left;
     KDNode* right;
     KDNode* parent;
-    unsigned int depth = -1;
+    int depth = -1;
 
     ~KDNode() { // Destructor
         if (left != nullptr) {

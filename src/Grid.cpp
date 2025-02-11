@@ -176,8 +176,7 @@ void Grid::ComputeVolumeFractionsCurv(){
     if (points.size() == 0 || cells.size() == 0 || kd_trees.size() == 0) {
         return;
     }
-
-    double maxK = -1e34;
+    
     for (int i = 0; i < cells.size(); i++) {
         if (!cells[i].crosses_boundary) {
             int count = 0;
@@ -195,9 +194,6 @@ void Grid::ComputeVolumeFractionsCurv(){
         double x_max = points[cell.indices[1]][0];
         double y_min = points[cell.indices[0]][1];
         double y_max = points[cell.indices[2]][1];
-
-        double dx = x_max - x_min;
-        double dy = y_max - y_min;
 
         vertex cell_center{(x_min + x_max) / 2, (y_min + y_max) / 2};
         vertex P; 
