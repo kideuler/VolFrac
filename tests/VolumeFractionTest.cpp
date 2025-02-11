@@ -20,12 +20,13 @@ TEST(VolumeFractionTest, ComputeVolumeFractionsCircle){
         segments.push_back({i, (i + 1) % num_segments});
     }
 
-    // Create the IntervalTree
-    IntervalTree<Axis::Y> tree(segments, coordinates);
+    
 
     BBox box{-1.01, 1.01, -1.01, 1.01};
     Grid grid(box, 10, 10);
-    grid.AddShape(tree);
+    // Create the IntervalTree
+    auto tree = std::make_unique<IntervalTree<Axis::Y>>(segments, coordinates);
+    grid.AddShape(std::move(tree));
     grid.ComputeVolumeFractions(2);
     double total_volume = grid.ComputeTotalVolume();
     double percent_error = 100 * fabs(total_volume - M_PI) / M_PI;
@@ -33,7 +34,8 @@ TEST(VolumeFractionTest, ComputeVolumeFractionsCircle){
     ASSERT_TRUE(percent_error < 5);
 
     Grid grid2(box, 100, 100);
-    grid2.AddShape(tree);
+    auto tree2 = std::make_unique<IntervalTree<Axis::Y>>(segments, coordinates);
+    grid2.AddShape(std::move(tree2));
     grid2.ComputeVolumeFractions(20);
     total_volume = grid2.ComputeTotalVolume();
     percent_error = 100 * fabs(total_volume - M_PI) / M_PI;
@@ -63,14 +65,13 @@ TEST(VolumeFractionTest, ComputeVolumeFractionsFlower){
         segments.push_back({i, (i + 1) % num_segments});
     }
 
-    // Create the IntervalTree
-    IntervalTree<Axis::Y> tree(segments, coordinates);
-
     double exact = 0.0075*M_PI;
 
     BBox box{-0.01, 1.01, -0.01, 1.01};
     Grid grid(box, 50, 50);
-    grid.AddShape(tree);
+    // Create the IntervalTree
+    auto tree = std::make_unique<IntervalTree<Axis::Y>>(segments, coordinates);
+    grid.AddShape(std::move(tree));
     grid.ComputeVolumeFractions(20);
     double total_volume = grid.ComputeTotalVolume();
     double percent_error = 100 * fabs(total_volume - exact) / exact;
@@ -100,14 +101,13 @@ TEST(VolumeFractionTest, ComputeVolumeFractionsCardioid){
         segments.push_back({i, (i + 1) % num_segments});
     }
 
-    // Create the IntervalTree
-    IntervalTree<Axis::Y> tree(segments, coordinates);
-
     double exact = 0.015*M_PI;
 
     BBox box{-0.01, 1.01, -0.01, 1.01};
     Grid grid(box, 50, 50);
-    grid.AddShape(tree);
+    // Create the IntervalTree
+    auto tree = std::make_unique<IntervalTree<Axis::Y>>(segments, coordinates);
+    grid.AddShape(std::move(tree));
     grid.ComputeVolumeFractions(20);
     double total_volume = grid.ComputeTotalVolume();
     double percent_error = 100 * fabs(total_volume - exact) / exact;
