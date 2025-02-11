@@ -61,7 +61,7 @@ class Grid {
         int ncellsx;
         int ncellsy;
         int first_cell_index = 0;
-        vector<IntervalTree<Axis::Y>> shapes;
+        vector<std::unique_ptr<IntervalTree<Axis::Y>>> shapes;
         vector<KDTree<5>> kd_trees;
         vector<bool> inflags;
 

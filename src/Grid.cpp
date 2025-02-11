@@ -26,22 +26,22 @@ Grid::Grid(BBox box, int nx, int ny){
 }
 
 void Grid::AddShape(std::unique_ptr<IntervalTree<Axis::Y>> bdy){
-    shapes.push_back(std::move(*bdy));
+    shapes.push_back(std::move(bdy));
 
     int npoints = nx*ny;
     inflags.resize(npoints, false);
 
     // determine which points are inside the shapes
     for (int i = 0; i < npoints; i++) {
-        inflags[i] = shapes[0].QueryPoint(points[i]) % 2 == 1;
+        inflags[i] = shapes[0]->QueryPoint(points[i]) % 2 == 1;
     }
 
-    for (int i = 0; i < shapes[0].seg_ids.size(); i++) {
-        int v1 = shapes[0].seg_ids[i][0];
-        int v2 = shapes[0].seg_ids[i][1];
+    for (int i = 0; i < shapes[0]->seg_ids.size(); i++) {
+        int v1 = shapes[0]->seg_ids[i][0];
+        int v2 = shapes[0]->seg_ids[i][1];
 
-        vertex P1 = shapes[0].coordinates[v1];
-        vertex P2 = shapes[0].coordinates[v2];
+        vertex P1 = shapes[0]->coordinates[v1];
+        vertex P2 = shapes[0]->coordinates[v2];
 
         // find cell index that contains P1 and P2
         int i1 = int((P1[0] - box.x_min) / dx);
@@ -163,7 +163,7 @@ void Grid::ComputeVolumeFractions(int npaxis){
         for (int j = 0; j < npaxis; j++) {
             for (int k = 0; k < npaxis; k++) {
                 vertex P = {points[cells[i].indices[0]][0] + k*dx_in, points[cells[i].indices[0]][1] + j*dy_in};
-                if (shapes[0].QueryPoint(P) % 2 == 1) {
+                if (shapes[0]->QueryPoint(P) % 2 == 1) {
                     fine_count++;
                 }
             }
@@ -309,15 +309,15 @@ void Grid::ResetBox(BBox box, int nx, int ny){
 
         // determine which points are inside the shapes
         for (int i = 0; i < npoints; i++) {
-            inflags[i] = shapes[0].QueryPoint(points[i]) % 2 == 1;
+            inflags[i] = shapes[0]->QueryPoint(points[i]) % 2 == 1;
         }
 
-        for (int i = 0; i < shapes[0].seg_ids.size(); i++) {
-            int v1 = shapes[0].seg_ids[i][0];
-            int v2 = shapes[0].seg_ids[i][1];
+        for (int i = 0; i < shapes[0]->seg_ids.size(); i++) {
+            int v1 = shapes[0]->seg_ids[i][0];
+            int v2 = shapes[0]->seg_ids[i][1];
 
-            vertex P1 = shapes[0].coordinates[v1];
-            vertex P2 = shapes[0].coordinates[v2];
+            vertex P1 = shapes[0]->coordinates[v1];
+            vertex P2 = shapes[0]->coordinates[v2];
 
             // find cell index that contains P1 and P2
             int i1 = int((P1[0] - box.x_min) / dx);
