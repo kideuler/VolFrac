@@ -29,7 +29,6 @@ TEST(GridTest, AddShape){
     }
 
     // Create the IntervalTree
-    IntervalTree<Axis::Y> tree(segments, coordinates);
-
-    grid.AddShape(tree);
+    auto tree = std::make_unique<IntervalTree<Axis::Y>>(segments, coordinates);
+    grid.AddShape(std::move(tree));
 }

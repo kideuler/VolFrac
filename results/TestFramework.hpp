@@ -89,9 +89,8 @@ Grid CreateGrid(BBox box, int nx, int ny, int shape_type, int nsegs = 10000) {
             break;
     }
 
-    IntervalTree<Axis::Y> shape(segments, coordinates);
-
-    grid.AddShape(shape);
+    auto shape = std::make_unique<IntervalTree<Axis::Y>>(segments, coordinates);
+    grid.AddShape(std::move(shape));
     grid.AddTree(tree);
     
     return grid;

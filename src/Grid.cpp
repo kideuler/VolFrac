@@ -25,8 +25,8 @@ Grid::Grid(BBox box, int nx, int ny){
     }
 }
 
-void Grid::AddShape(IntervalTree<Axis::Y> &bdy){
-    shapes.push_back(bdy);
+void Grid::AddShape(std::unique_ptr<IntervalTree<Axis::Y>> bdy){
+    shapes.push_back(std::move(*bdy));
 
     int npoints = nx*ny;
     inflags.resize(npoints, false);
@@ -176,7 +176,7 @@ void Grid::ComputeVolumeFractionsCurv(){
     if (points.size() == 0 || cells.size() == 0 || kd_trees.size() == 0) {
         return;
     }
-    
+
     for (int i = 0; i < cells.size(); i++) {
         if (!cells[i].crosses_boundary) {
             int count = 0;

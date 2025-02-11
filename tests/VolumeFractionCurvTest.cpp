@@ -36,13 +36,11 @@ TEST(VolumeFractionCurveTest, ComputeVolumeFractionsCircle){
         segments.push_back({i, (i + 1) % num_segments});
     }
 
-    // Create the IntervalTree
-    IntervalTree<Axis::Y> shape(segments, coordinates);
-
     BBox box{-0.01, 1.01, -0.01, 1.01};
     Grid grid(box, 100, 100);
     grid.AddTree(tree);
-    grid.AddShape(shape);
+    auto shape = std::make_unique<IntervalTree<Axis::Y>>(segments, coordinates);
+    grid.AddShape(std::move(shape));
 
     grid.ComputeVolumeFractionsCurv();
 
@@ -90,13 +88,11 @@ TEST(VolumeFractionCurveTest, ComputeVolumeFractionsEllipse){
         segments.push_back({i, (i + 1) % num_segments});
     }
 
-    // Create the IntervalTree
-    IntervalTree<Axis::Y> shape(segments, coordinates);
-
     BBox box{-0.01, 1.01, -0.01, 1.01};
     Grid grid(box, 100, 100);
     grid.AddTree(tree);
-    grid.AddShape(shape);
+    auto shape = std::make_unique<IntervalTree<Axis::Y>>(segments, coordinates);
+    grid.AddShape(std::move(shape));
 
     grid.ComputeVolumeFractionsCurv();
 
@@ -142,14 +138,11 @@ TEST(VolumeFractionCurveTest, ComputeVolumeFractionsFlower){
     for (int i = 0; i < num_segments; ++i) {
         segments.push_back({i, (i + 1) % num_segments});
     }
-
-    // Create the IntervalTree
-    IntervalTree<Axis::Y> shape(segments, coordinates);
-
     BBox box{-0.01, 1.01, -0.01, 1.01};
     Grid grid(box, 130, 200);
     grid.AddTree(tree);
-    grid.AddShape(shape);
+    auto shape = std::make_unique<IntervalTree<Axis::Y>>(segments, coordinates);
+    grid.AddShape(std::move(shape));
 
     grid.ComputeVolumeFractionsCurv();
 
