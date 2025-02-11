@@ -23,7 +23,7 @@ int main(int argc, char** argv){
 #ifdef USE_TORCH
     grid.model = &model;
 #endif
-    vector<int> sizes = {32,64,128,256,512,1024};
+    vector<int> sizes = {32,64,128,256,512,1024,2048,4096};
     vector<string> headers = {"Sizes","PIB 3", "PIB 5", "PIB 10", "OscCircle", "AI"};
     vector<vector<double>> data;
 

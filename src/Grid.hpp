@@ -4,6 +4,7 @@
 #include "IntervalTree.hpp"
 #include "KDTree.hpp"
 #include "CircleVolFrac.hpp"
+#include <memory>
 
 #ifdef USE_TORCH
 #include "TorchWrapper.hpp"
