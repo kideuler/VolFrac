@@ -28,6 +28,7 @@ endif()
 if(USE_TORCH)
   find_package(Torch REQUIRED)
   target_link_libraries(VolFrac PUBLIC ${TORCH_LIBRARIES})
+  add_compile_definitions(USE_TORCH)
 endif()
 
 # Include directories

@@ -3,7 +3,7 @@
 #include "Grid.hpp"
 
 TEST(TorchWrapperTest, Predict){
-    TorchWrapper model("../../models/VolFrac.pt", "../../models/normalization.pt");
+    TorchWrapper model("../../models/VolFracRL.pt", "../../models/normalization.pt");
     double k = 0.001;
     vertex C{0.5, 0.5};
     double volfrac = model.Predict(C[0], C[1], 0.0, 1.0, k);
@@ -18,7 +18,7 @@ TEST(TorchWrapperTest, Predict){
 }
 
 TEST(TorchWrapperTest, Circle){
-    const int num_segments = 1000;
+const int num_segments = 1000;
     const double pi = 3.14159265358979323846;
 
     coords coordinates;
@@ -45,11 +45,19 @@ TEST(TorchWrapperTest, Circle){
         tree.Insert(P, arr);
     }
 
-    BBox box{-0.01, 1.01, -0.01, 1.01};
-    Grid grid(box, 300, 300);
-    grid.AddTree(tree);
+    // Create segment ids for the unit circle
+    segment_ids segments;
+    for (int i = 0; i < num_segments; ++i) {
+        segments.push_back({i, (i + 1) % num_segments});
+    }
 
-    TorchWrapper model("../../models/VolFrac.pt", "../../models/normalization.pt");
+    BBox box{-0.01, 1.01, -0.01, 1.01};
+    Grid grid(box, 100, 100);
+    grid.AddTree(tree);
+    auto shape = std::make_unique<IntervalTree<Axis::Y>>(segments, coordinates);
+    grid.AddShape(std::move(shape));
+
+    TorchWrapper model("../../models/VolFracRL.pt", "../../models/normalization.pt");
     grid.model = &model;
 
     grid.ComputeVolumeFractionsAI();

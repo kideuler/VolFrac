@@ -2,13 +2,14 @@
 #include "LatexTable.hpp"
 
 const double pi = 3.14159265358979323846;
+int column_width = 15;
 using namespace std;
 
 int main(){
     int nruns = 100000;
 
 #ifdef USE_TORCH
-    TorchWrapper model("../../models/VolFrac.pt", "../../models/normalization.pt");
+    TorchWrapper model("../../models/VolFracRL.pt", "../../models/normalization.pt");
 #else
     std::cout << "Torch not enabled" << std::endl;
 #endif
@@ -101,10 +102,27 @@ int main(){
     totals[2] /= nruns;
     totals[3] /= nruns;
 
-    std::cout << "PIB5: " << totals[0] << " PIB50: " << totals[1] << " Osc: " << totals[2] << " AI: " << totals[3] << std::endl;
+#ifdef USE_TORCH
+    vector<string> headers = {"PIB 5", "PIB 50", "OscCircle", "AI"};
+#else
+    vector<string> headers = {"PIB 5", "PIB 50", "OscCircle"};
+#endif
+
+#ifndef USE_TORCH
+    totals.pop_back();
+#endif
+
+    for (const auto& header : headers) {
+        cout << setw(column_width) << header << " ";
+    }
+    cout << endl;
+
+    for (const auto& value : totals) {
+        cout << setw(column_width) << value << " ";
+    }
+    cout << endl;
 
     // Make the table
-    vector<string> headers = {"PIB5", "PIB50", "Osc", "AI"};
     vector<vector<double>> data = {totals};
 
     WriteLatexTable("Accuracy_line_test.tex", headers, data, "Volume fraction perecnt error for a straight line with curvature approximation of 1e-5");

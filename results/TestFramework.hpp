@@ -2,6 +2,7 @@
 #define __TEST_FRAMEWORK_HPP__
 
 #include "Grid.hpp"
+#include <iomanip>
 
 Grid CreateGrid(BBox box, int nx, int ny, int shape_type, int nsegs = 10000) {
     Grid grid(box, nx, ny);

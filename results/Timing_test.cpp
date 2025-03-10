@@ -3,6 +3,7 @@
 #include "chrono"
 
 const double pi = 3.14159265358979323846;
+int column_width = 15;
 using namespace std;
 
 int main(int argc, char** argv){
@@ -24,7 +25,16 @@ int main(int argc, char** argv){
     grid.model = &model;
 #endif
     vector<int> sizes = {32,64,128,256,512,1024,2048,4096};
-    vector<string> headers = {"Sizes","PIB 3", "PIB 5", "PIB 10", "OscCircle", "AI"};
+#ifdef USE_TORCH
+    vector<string> headers = {"Sizes","Cross","PIB 3", "PIB 10", "OscCircle", "AI"};
+#else
+    vector<string> headers = {"Sizes","Cross","PIB 3", "PIB 10", "OscCircle"};
+#endif
+    for (const auto& header : headers) {
+        cout << setw(column_width) << header << " ";
+    }
+    cout << endl;
+
     vector<vector<double>> data;
 
     auto start = std::chrono::high_resolution_clock::now();
@@ -84,7 +94,11 @@ int main(int argc, char** argv){
 #endif
         data.push_back(row);
 
-        std::cout << row[0] << " " << row[1] << " " << row[2] << " " << row[3] << " " << row[4] << " " << row[5] << std::endl;
+        // print the row
+        for (const auto& value : row) {
+            cout << setw(column_width) << value << " ";
+        }
+        cout << endl;
     }
 
     // np as string

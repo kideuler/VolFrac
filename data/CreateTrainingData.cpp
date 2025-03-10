@@ -4,7 +4,7 @@
 
 int main(int argc, char** argv) {
 
-    int nruns = 1000;
+    int nruns = 2000;
     if (argc > 1){
         nruns = atoi(argv[1]);
     }
