@@ -36,7 +36,7 @@ void Grid::AddShape(std::unique_ptr<IntervalTree<Axis::Y>> bdy){
         inflags[i] = shapes[0]->QueryPoint(points[i]) % 2 == 1;
     }
 
-    for (int i = 0; i < shapes[0]->seg_ids.size(); i++) {
+    for (size_t i = 0; i < shapes[0]->seg_ids.size(); i++) {
         int v1 = shapes[0]->seg_ids[i][0];
         int v2 = shapes[0]->seg_ids[i][1];
 
@@ -83,7 +83,7 @@ void Grid::AddShape(std::unique_ptr<IntervalTree<Axis::Y>> bdy){
 
     // loop through all cells and add adjacent cells to cross boundary true
     vector<bool> visited(cells.size(), false);
-    for (int i = 0; i < cells.size(); i++) {
+    for (size_t i = 0; i < cells.size(); i++) {
         if (cells[i].crosses_boundary) {
             int x = i % (nx-1);
             int y = i / (nx-1);
@@ -102,7 +102,7 @@ void Grid::AddShape(std::unique_ptr<IntervalTree<Axis::Y>> bdy){
         }
     }
 
-    for (int i = 0; i < cells.size(); i++) {
+    for (size_t i = 0; i < cells.size(); i++) {
         if (visited[i]) {
             cells[i].crosses_boundary = true;
         }
@@ -119,7 +119,7 @@ void Grid::ComputeVolumeFractions(){
     }
 
     int count = 0;
-    for (int i = 0; i < cells.size(); i++) {
+    for (size_t i = 0; i < cells.size(); i++) {
         count = 0;
         for (int j = 0; j < 4; j++) {
             if (inflags[cells[i].indices[j]]) {
@@ -145,7 +145,7 @@ void Grid::ComputeVolumeFractions(int npaxis){
     // compute the volume fractions
     double dx_in = dx / (npaxis-1);
     double dy_in = dy / (npaxis-1);
-    for (int i = 0; i < cells.size(); i++) {
+    for (size_t i = 0; i < cells.size(); i++) {
 
         if (!cells[i].crosses_boundary) {
             int count = 0;
@@ -177,7 +177,7 @@ void Grid::ComputeVolumeFractionsCurv(){
         return;
     }
 
-    for (int i = 0; i < cells.size(); i++) {
+    for (size_t i = 0; i < cells.size(); i++) {
         if (!cells[i].crosses_boundary) {
             int count = 0;
             for (int j = 0; j < 4; j++) {
@@ -205,7 +205,7 @@ void Grid::ComputeVolumeFractionsCurv(){
         double area = ComputeCircleBoxIntersection(C, R, x_min, x_max, y_min, y_max);
 
         double volfrac = area/cell.volume;
-        cells[i].volfrac = area/cell.volume;
+        cells[i].volfrac = volfrac;
     }
 }
 
@@ -267,14 +267,14 @@ void Grid::ComputeVolumeFractionsAI(){
 
 double Grid::ComputeTotalVolume(){
     double total_volume = 0.0;
-    for (int i = 0; i < cells.size(); i++) {
+    for (size_t i = 0; i < cells.size(); i++) {
         total_volume += cells[i].volume * cells[i].volfrac;
     }
     return total_volume;
 }
 
 void Grid::ZeroVolumeFractions(){
-    for (int i = 0; i < cells.size(); i++) {
+    for (size_t i = 0; i < cells.size(); i++) {
         cells[i].volfrac = 0.0;
     }
 }
@@ -312,7 +312,7 @@ void Grid::ResetBox(BBox box, int nx, int ny){
             inflags[i] = shapes[0]->QueryPoint(points[i]) % 2 == 1;
         }
 
-        for (int i = 0; i < shapes[0]->seg_ids.size(); i++) {
+        for (size_t i = 0; i < shapes[0]->seg_ids.size(); i++) {
             int v1 = shapes[0]->seg_ids[i][0];
             int v2 = shapes[0]->seg_ids[i][1];
 
@@ -359,7 +359,7 @@ void Grid::ResetBox(BBox box, int nx, int ny){
 
         // loop through all cells and add adjacent cells to cross boundary true
         vector<bool> visited(cells.size(), false);
-        for (int i = 0; i < cells.size(); i++) {
+        for (size_t i = 0; i < cells.size(); i++) {
             if (cells[i].crosses_boundary) {
                 int x = i % (nx-1);
                 int y = i / (nx-1);
@@ -378,7 +378,7 @@ void Grid::ResetBox(BBox box, int nx, int ny){
             }
         }
 
-        for (int i = 0; i < cells.size(); i++) {
+        for (size_t i = 0; i < cells.size(); i++) {
             if (visited[i]) {
                 cells[i].crosses_boundary = true;
             }
