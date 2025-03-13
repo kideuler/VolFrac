@@ -25,12 +25,3 @@ gtest_discover_tests(KDTreeTest)
 add_executable(VolumeFractionCurvTest VolumeFractionCurvTest.cpp)
 target_link_libraries(VolumeFractionCurvTest GTest::GTest GTest::Main VolFrac)
 gtest_discover_tests(VolumeFractionCurvTest)
-
-if (USE_TORCH)
-    add_executable(TorchWrapperTest TorchWrapperTest.cpp)
-    target_link_libraries(TorchWrapperTest GTest::GTest GTest::Main VolFrac)
-    gtest_discover_tests(TorchWrapperTest)
-    target_compile_definitions(TorchWrapperTest
-    PUBLIC
-        USE_TORCH)
-endif()

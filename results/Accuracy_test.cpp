@@ -69,6 +69,8 @@ int main(int argc, char** argv) {
         grid.ComputeVolumeFractionsCurv();
         result = 100.0*fabs(grid.ComputeTotalVolume() - exact) / exact;
         row.push_back(result);
+
+        grid.ExportToVTK("test_"+std::to_string(i)+".vtk");
         grid.ZeroVolumeFractions();
 
         // AI method

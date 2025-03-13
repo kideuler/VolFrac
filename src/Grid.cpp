@@ -51,8 +51,8 @@ void Grid::AddShape(std::unique_ptr<IntervalTree<Axis::Y>> bdy){
         int j2 = int((P2[1] - box.y_min) / dy);
         int c2 = i2 + j2*(nx-1);
 
-        cells[c1].crosses_boundary = true;
-        cells[c2].crosses_boundary = true;
+        cells[c1].loc_type = 1;
+        cells[c2].loc_type = 1;
 
         // get all cells that the line between P1 and P2 crosses
         int x1 = i1, y1 = j1;
@@ -66,7 +66,7 @@ void Grid::AddShape(std::unique_ptr<IntervalTree<Axis::Y>> bdy){
         int x = x1, y = y1;
         while (true) {
             int cell_index = x + y*(nx-1);
-            cells[cell_index].crosses_boundary = true;
+            cells[cell_index].loc_type = 1;
             if (x == x2 && y == y2)
                 break;
             int e2 = 2 * err;
@@ -82,29 +82,31 @@ void Grid::AddShape(std::unique_ptr<IntervalTree<Axis::Y>> bdy){
     }
 
     // loop through all cells and add adjacent cells to cross boundary true
-    vector<bool> visited(cells.size(), false);
-    for (size_t i = 0; i < cells.size(); i++) {
-        if (cells[i].crosses_boundary) {
-            int x = i % (nx-1);
-            int y = i / (nx-1);
-            if (x > 0) {
-                visited[i-1] = true;
-            }
-            if (x < nx-1) {
-                visited[i+1] = true;
-            }
-            if (y > 0) {
-                visited[i-(nx-1)] = true;
-            }
-            if (y < ny-1) {
-                visited[i+(nx-1)] = true;
+    for (int n = 0; n < 2; n++) {
+        vector<bool> visited(cells.size(), false);
+        for (size_t i = 0; i < cells.size(); i++) {
+            if (cells[i].loc_type == 1) {
+                int x = i % (nx-1);
+                int y = i / (nx-1);
+                if (x > 0) {
+                    visited[i-1] = true;
+                }
+                if (x < nx-1) {
+                    visited[i+1] = true;
+                }
+                if (y > 0) {
+                    visited[i-(nx-1)] = true;
+                }
+                if (y < ny-1) {
+                    visited[i+(nx-1)] = true;
+                }
             }
         }
-    }
 
-    for (size_t i = 0; i < cells.size(); i++) {
-        if (visited[i]) {
-            cells[i].crosses_boundary = true;
+        for (size_t i = 0; i < cells.size(); i++) {
+            if (visited[i]) {
+                cells[i].loc_type = 1;
+            }
         }
     }
 }
@@ -147,7 +149,7 @@ void Grid::ComputeVolumeFractions(int npaxis){
     double dy_in = dy / (npaxis-1);
     for (size_t i = 0; i < cells.size(); i++) {
 
-        if (!cells[i].crosses_boundary) {
+        if (!(cells[i].loc_type == 1)) {
             int count = 0;
             for (int j = 0; j < 4; j++) {
                 if (inflags[cells[i].indices[j]]) {
@@ -178,7 +180,7 @@ void Grid::ComputeVolumeFractionsCurv(){
     }
 
     for (size_t i = 0; i < cells.size(); i++) {
-        if (!cells[i].crosses_boundary) {
+        if (!(cells[i].loc_type == 1)) {
             int count = 0;
             for (int j = 0; j < 4; j++) {
                 if (inflags[cells[i].indices[j]]) {
@@ -205,6 +207,13 @@ void Grid::ComputeVolumeFractionsCurv(){
         double area = ComputeCircleBoxIntersection(C, R, x_min, x_max, y_min, y_max);
 
         double volfrac = area/cell.volume;
+        if (volfrac > 1.0){
+            volfrac = 1.0;
+        }
+        if (data[4] < 0.0) {
+            //std::cout << data[4] << " " << volfrac << std::endl;
+            //volfrac = 1.0 - volfrac;
+        }
         cells[i].volfrac = volfrac;
     }
 }
@@ -216,7 +225,7 @@ void Grid::ComputeVolumeFractionsAI(){
     }
 
     for (int i = 0; i < cells.size(); i++) {
-        if (!cells[i].crosses_boundary) {
+        if (!(cells[i].loc_type == 1)) {
             int count = 0;
             for (int j = 0; j < 4; j++) {
                 if (inflags[cells[i].indices[j]]) {
@@ -327,8 +336,8 @@ void Grid::ResetBox(BBox box, int nx, int ny){
             int j2 = int((P2[1] - box.y_min) / dy);
             int c2 = i2 + j2*(nx-1);
 
-            cells[c1].crosses_boundary = true;
-            cells[c2].crosses_boundary = true;
+            cells[c1].loc_type = 1;
+            cells[c2].loc_type = 1;
 
             // get all cells that the line between P1 and P2 crosses
             int x1 = i1, y1 = j1;
@@ -342,7 +351,7 @@ void Grid::ResetBox(BBox box, int nx, int ny){
             int x = x1, y = y1;
             while (true) {
                 int cell_index = x + y*(nx-1);
-                cells[cell_index].crosses_boundary = true;
+                cells[cell_index].loc_type = 1;
                 if (x == x2 && y == y2)
                     break;
                 int e2 = 2 * err;
@@ -360,7 +369,7 @@ void Grid::ResetBox(BBox box, int nx, int ny){
         // loop through all cells and add adjacent cells to cross boundary true
         vector<bool> visited(cells.size(), false);
         for (size_t i = 0; i < cells.size(); i++) {
-            if (cells[i].crosses_boundary) {
+            if (cells[i].loc_type == 1) {
                 int x = i % (nx-1);
                 int y = i / (nx-1);
                 if (x > 0) {
@@ -380,8 +389,110 @@ void Grid::ResetBox(BBox box, int nx, int ny){
 
         for (size_t i = 0; i < cells.size(); i++) {
             if (visited[i]) {
-                cells[i].crosses_boundary = true;
+                cells[i].loc_type = 1;
             }
         }
     }
+}
+
+void Grid::ExportToVTK(const std::string& filename) {
+    // Open file for writing
+    std::ofstream vtkFile(filename);
+    if (!vtkFile.is_open()) {
+        std::cerr << "Failed to open file: " << filename << std::endl;
+        return;
+    }
+
+    // Write VTK header
+    vtkFile << "# vtk DataFile Version 3.0\n";
+    vtkFile << "Grid with volume fractions\n";
+    vtkFile << "ASCII\n";
+    vtkFile << "DATASET UNSTRUCTURED_GRID\n";
+
+    // Write points
+    vtkFile << "POINTS " << points.size() << " float\n";
+    for (const auto& point : points) {
+        vtkFile << point[0] << " " << point[1] << " 0.0\n";
+    }
+
+    // Write cells
+    vtkFile << "CELLS " << cells.size() << " " << cells.size() * 5 << "\n";
+    for (const auto& cell : cells) {
+        vtkFile << "4 " << cell.indices[0] << " " << cell.indices[1] << " " 
+                << cell.indices[2] << " " << cell.indices[3] << "\n";
+    }
+
+    // Write cell types (9 = VTK_QUAD)
+    vtkFile << "CELL_TYPES " << cells.size() << "\n";
+    for (size_t i = 0; i < cells.size(); i++) {
+        vtkFile << "9\n";
+    }
+
+    // Write cell data (volume fractions)
+    vtkFile << "CELL_DATA " << cells.size() << "\n";
+    vtkFile << "SCALARS volume_fraction float 1\n";
+    vtkFile << "LOOKUP_TABLE default\n";
+    for (const auto& cell : cells) {
+        vtkFile << cell.volfrac << "\n";
+    }
+    
+    // Add location type data
+    vtkFile << "SCALARS location_type int 1\n";
+    vtkFile << "LOOKUP_TABLE default\n";
+    for (const auto& cell : cells) {
+        vtkFile << cell.loc_type << "\n";
+    }
+
+    vtkFile.close();
+    
+    // Write the boundary curves to a separate file if we have shapes
+    if (!shapes.empty()) {
+        std::string curvesFilename = filename.substr(0, filename.find_last_of('.')) + "_curves.vtk";
+        std::ofstream curvesFile(curvesFilename);
+        
+        if (!curvesFile.is_open()) {
+            std::cerr << "Failed to open file: " << curvesFilename << std::endl;
+            return;
+        }
+        
+        curvesFile << "# vtk DataFile Version 3.0\n";
+        curvesFile << "Boundary curves\n";
+        curvesFile << "ASCII\n";
+        curvesFile << "DATASET POLYDATA\n";
+        
+        // Count total number of points in all shapes
+        size_t totalPoints = 0;
+        for (const auto& shape : shapes) {
+            totalPoints += shape->coordinates.size();
+        }
+        
+        // Write points for the boundary
+        curvesFile << "POINTS " << totalPoints << " float\n";
+        for (const auto& shape : shapes) {
+            for (const auto& point : shape->coordinates) {
+                curvesFile << point[0] << " " << point[1] << " 0.0\n";
+            }
+        }
+        
+        // Count total number of segments
+        size_t totalSegments = 0;
+        for (const auto& shape : shapes) {
+            totalSegments += shape->seg_ids.size();
+        }
+        
+        // Write lines for the boundary
+        curvesFile << "LINES " << totalSegments << " " << totalSegments * 3 << "\n";
+        size_t pointOffset = 0;
+        for (const auto& shape : shapes) {
+            for (const auto& seg : shape->seg_ids) {
+                curvesFile << "2 " << (seg[0] + pointOffset) << " " << (seg[1] + pointOffset) << "\n";
+            }
+            pointOffset += shape->coordinates.size();
+        }
+        
+        curvesFile.close();
+        std::cout << "Boundary curves exported successfully to: " << curvesFilename << std::endl;
+    }
+    
+    std::cout << "VTK file exported successfully to: " << filename << std::endl;
 }

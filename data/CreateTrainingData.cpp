@@ -1,10 +1,11 @@
 #include "Grid.hpp"
 #include <random>
 #include <fstream>
+#include <iomanip> 
 
 int main(int argc, char** argv) {
 
-    int nruns = 2000;
+    int nruns = 100000;
     if (argc > 1){
         nruns = atoi(argv[1]);
     }
@@ -21,15 +22,15 @@ int main(int argc, char** argv) {
         double y = (double)rand() / RAND_MAX;
 
         // random normal vector
-        double nx = (double)rand() / RAND_MAX;
-        double ny = (double)rand() / RAND_MAX;
+        double nx = 2.0*((double)rand() / RAND_MAX)-1.0;
+        double ny = 2.0*((double)rand() / RAND_MAX)-1.0;
         double nrm = sqrt(nx*nx + ny*ny);
         nx /= nrm;
         ny /= nrm;
 
         // random curvature on a log scale
         double K = 0;
-        switch (n % 8) {
+        switch (n % 6) {
             case 0:
                 K = 1.0;
                 break;
@@ -47,15 +48,8 @@ int main(int argc, char** argv) {
                 break;
             case 5:
                 K = 0.00001;
-                break;
-            case 6:
-                K = 0.000001;
-                break;
-            case 7:
-                K = 0.000001;
-                break;
         }
-        K *= 1e-9+(double)rand() / RAND_MAX;
+        K *= (double)rand() / RAND_MAX;
         
 
         // compute intersection area with unit square
@@ -64,8 +58,14 @@ int main(int argc, char** argv) {
 
         double area = ComputeCircleBoxIntersection(C, R, 0.0, 1.0, 0.0, 1.0);
 
+        if (area < 0.0 || area > 1.0){
+            continue;
+        }
+
         // print the data
-        fid << x << " " << y << " " << nx << " " << ny << " " << K << " " << area << std::endl;
+        fid << std::fixed << std::setprecision(10)
+            << x << ", " << y << ", " << nx << ", " << ny << ", " 
+            << K << ", " << area << std::endl;
     }
 
     std::cout << "--- Finished the generation of training data ---" << std::endl;

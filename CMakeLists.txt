@@ -24,13 +24,6 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   )
 endif()
 
-# add torch if USE_TORCH is set to true
-if(USE_TORCH)
-  find_package(Torch REQUIRED)
-  target_link_libraries(VolFrac PUBLIC ${TORCH_LIBRARIES})
-  add_compile_definitions(USE_TORCH)
-endif()
-
 # Include directories
 target_include_directories(VolFrac PUBLIC src models results)
 

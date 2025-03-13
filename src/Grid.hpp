@@ -5,10 +5,10 @@
 #include "KDTree.hpp"
 #include "CircleVolFrac.hpp"
 #include <memory>
-
-#ifdef USE_TORCH
-#include "TorchWrapper.hpp"
-#endif
+#include <fstream>
+#include <iostream>
+#include <filesystem>
+#include <iomanip>
 
 using namespace std;
 
@@ -22,8 +22,8 @@ struct BBox {
 struct cell {
     array<int,4> indices;
     double volume;
-    double volfrac;
-    bool crosses_boundary = false;
+    double volfrac = 0.0;
+    int8_t loc_type = 0;
     int closest_center = -1;
 };
 
@@ -51,6 +51,8 @@ class Grid {
         void ZeroVolumeFractions(); // Set all volume fractions to zero
 
         void ResetBox(BBox box, int nx, int ny); // Reset the box and grid size
+
+        void ExportToVTK(const std::string& filename);
 
     private:
         BBox box;
