@@ -47,6 +47,21 @@ double ComputeCircleBoxIntersection(const vertex &C, double r, double x_min, dou
     double y1 = y_max-C[1];
 
     return area(x0, x1, y0, y1, r);
+
+    // compute in out of a high number of points
+    // int n = 1000;
+    // double dx = (x_max - x_min) / n;
+    // double dy = (y_max - y_min) / n;
+    // double count = 0.0;
+    // for (int i = 0; i < n; i++) {
+    //     double x = x_min + i*dx - C[0];
+    //     for (int j = 0; j < n; j++) {
+    //         double y = y_min + j*dy - C[1];
+    //         // add to count if the point is inside the circle
+    //         count += (x*x + y*y < r*r);
+    //     }
+    // }
+    // return count / (n*n);
 }
 
 // from https://stackoverflow.com/questions/401847/circle-rectangle-collision-detection-intersection

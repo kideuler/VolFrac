@@ -28,7 +28,7 @@ int main(int argc, char** argv){
 #ifdef USE_TORCH
     vector<string> headers = {"Sizes","Cross","PIB 3", "PIB 10", "OscCircle", "AI"};
 #else
-    vector<string> headers = {"Sizes","Cross","PIB 3", "PIB 10", "OscCircle"};
+    vector<string> headers = {"Sizes","Cross","PIB 10", "PIB 50", "OscCircle"};
 #endif
     for (const auto& header : headers) {
         cout << setw(column_width) << header << " ";
@@ -57,7 +57,7 @@ int main(int argc, char** argv){
 
         // pib 5
         start = std::chrono::high_resolution_clock::now();
-        grid.ComputeVolumeFractions(5);
+        grid.ComputeVolumeFractions(10);
         end = std::chrono::high_resolution_clock::now();
         duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
         seconds = duration.count() / 1000000.0;
@@ -66,7 +66,7 @@ int main(int argc, char** argv){
 
         // pib 10
         start = std::chrono::high_resolution_clock::now();
-        grid.ComputeVolumeFractions(10);
+        grid.ComputeVolumeFractions(50);
         end = std::chrono::high_resolution_clock::now();
         duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
         seconds = duration.count() / 1000000.0;

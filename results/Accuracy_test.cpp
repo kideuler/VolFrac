@@ -21,7 +21,7 @@ int main(int argc, char** argv) {
     vector<string> shape_names = {"Ellipse", "Flower", "Petals"};
 
     BBox box{0.3, 0.7, 0.3, 0.7};
-    Grid grid = CreateGrid(box, 5, 5, shape, 5000);
+    Grid grid = CreateGrid(box, 5, 5, shape, 50000);
     double exact = exacts[shape];
 #ifdef USE_TORCH
     grid.model = &model;
@@ -32,9 +32,9 @@ int main(int argc, char** argv) {
         sizes_str.push_back(to_string(size));
     }
 #ifdef USE_TORCH
-    vector<string> headers = {"Sizes","Cross","PIB 3", "PIB 10", "OscCircle", "AI"};
+    vector<string> headers = {"Sizes","Cross","PIB 10", "PIB 50", "OscCircle", "AI"};
 #else
-    vector<string> headers = {"Sizes","Cross","PIB 3", "PIB 10", "OscCircle"};
+    vector<string> headers = {"Sizes","Cross","PIB 10", "PIB 50", "OscCircle"};
 #endif
     for (const auto& header : headers) {
         cout << setw(column_width) << header << " ";
@@ -54,13 +54,13 @@ int main(int argc, char** argv) {
         grid.ZeroVolumeFractions();
 
         // pib 3
-        grid.ComputeVolumeFractions(3);
+        grid.ComputeVolumeFractions(10);
         result = 100.0*fabs(grid.ComputeTotalVolume() - exact) / exact;
         row.push_back(result);
         grid.ZeroVolumeFractions();
 
         // pib 10
-        grid.ComputeVolumeFractions(10);
+        grid.ComputeVolumeFractions(50);
         result = 100.0*fabs(grid.ComputeTotalVolume() - exact) / exact;
         row.push_back(result);
         grid.ZeroVolumeFractions();
@@ -69,8 +69,6 @@ int main(int argc, char** argv) {
         grid.ComputeVolumeFractionsCurv();
         result = 100.0*fabs(grid.ComputeTotalVolume() - exact) / exact;
         row.push_back(result);
-
-        grid.ExportToVTK("test_"+std::to_string(i)+".vtk");
         grid.ZeroVolumeFractions();
 
         // AI method
