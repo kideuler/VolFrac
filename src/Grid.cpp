@@ -218,7 +218,6 @@ void Grid::ComputeVolumeFractionsCurv(){
             volfrac = 1.0;
         }
         if (data[4] < 0.0) {
-            //std::cout << data[4] << " " << volfrac << std::endl;
             volfrac = 1.0 - volfrac;
         }
         cells[i].volfrac = volfrac;

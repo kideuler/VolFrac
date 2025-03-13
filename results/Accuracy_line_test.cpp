@@ -47,8 +47,8 @@ int main(){
         vertex C({P[0] + (1.0/k)*normal[0], P[1] + (1.0/k)*normal[1]});
         double volfracOsc = 1.0-ComputeCircleBoxIntersection(C, 1.0/k, 0.0, 1.0, 0.0, 1.0);
 
-        // Compute PIB3
-        int np = 5;
+        // Compute PIB10
+        int np = 10;
         double T = double(np*np);
         double p = 0.0;
         for (int i = 0; i < np; i++){
@@ -64,7 +64,7 @@ int main(){
         }
         double volfracPIB3 = p / T;
 
-        // Compute PIB10
+        // Compute PIB50
         np = 50;
         T = double(np*np);
         p = 0.0;
@@ -103,9 +103,9 @@ int main(){
     totals[3] /= nruns;
 
 #ifdef USE_TORCH
-    vector<string> headers = {"PIB 5", "PIB 50", "OscCircle", "AI"};
+    vector<string> headers = {"PIB 10", "PIB 50", "OscCircle", "AI"};
 #else
-    vector<string> headers = {"PIB 5", "PIB 50", "OscCircle"};
+    vector<string> headers = {"PIB 10", "PIB 50", "OscCircle"};
 #endif
 
 #ifndef USE_TORCH

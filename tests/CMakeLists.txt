@@ -25,3 +25,7 @@ gtest_discover_tests(KDTreeTest)
 add_executable(VolumeFractionCurvTest VolumeFractionCurvTest.cpp)
 target_link_libraries(VolumeFractionCurvTest GTest::GTest GTest::Main VolFrac)
 gtest_discover_tests(VolumeFractionCurvTest)
+
+add_executable(MatrixVectorTest MatrixVectorTest.cpp)
+target_link_libraries(MatrixVectorTest GTest::GTest GTest::Main VolFrac)
+gtest_discover_tests(MatrixVectorTest)
