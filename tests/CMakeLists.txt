@@ -29,3 +29,12 @@ gtest_discover_tests(VolumeFractionCurvTest)
 add_executable(MatrixVectorTest MatrixVectorTest.cpp)
 target_link_libraries(MatrixVectorTest GTest::GTest GTest::Main VolFrac)
 gtest_discover_tests(MatrixVectorTest)
+
+# Copy model.dat file to the test directory
+configure_file(${CMAKE_SOURCE_DIR}/models/model.dat 
+               ${CMAKE_CURRENT_BINARY_DIR}/model.dat 
+               COPYONLY)
+
+add_executable(ModelTest ModelTest.cpp)
+target_link_libraries(ModelTest GTest::GTest GTest::Main VolFrac)
+gtest_discover_tests(ModelTest)
