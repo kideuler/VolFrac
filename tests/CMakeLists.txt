@@ -38,3 +38,7 @@ configure_file(${CMAKE_SOURCE_DIR}/models/model.dat
 add_executable(ModelTest ModelTest.cpp)
 target_link_libraries(ModelTest GTest::GTest GTest::Main VolFrac)
 gtest_discover_tests(ModelTest)
+
+add_executable(BezierTest BezierTest.cpp)
+target_link_libraries(BezierTest GTest::GTest GTest::Main VolFrac)
+gtest_discover_tests(BezierTest)
