@@ -82,7 +82,7 @@ void Grid::AddShape(std::unique_ptr<IntervalTree<Axis::Y>> bdy){
     }
 
     // loop through all cells and add adjacent cells to cross boundary true
-    for (int n = 0; n < 2; n++) {
+    for (int n = 0; n < 1; n++) {
         vector<bool> visited(cells.size(), false);
         for (size_t i = 0; i < cells.size(); i++) {
             if (cells[i].loc_type == 1) {
@@ -224,7 +224,6 @@ void Grid::ComputeVolumeFractionsCurv(){
     }
 }
 
-#ifdef USE_TORCH
 void Grid::ComputeVolumeFractionsAI(){
     if (points.size() == 0 || cells.size() == 0 || kd_trees.size() == 0 || model == nullptr) {
         return;
@@ -241,6 +240,7 @@ void Grid::ComputeVolumeFractionsAI(){
             cells[i].volfrac = double(count) / 4.0;
             continue;
         }
+
         cell cell = cells[i];
         double x_min = points[cell.indices[0]][0];
         double x_max = points[cell.indices[1]][0];
@@ -265,20 +265,31 @@ void Grid::ComputeVolumeFractionsAI(){
         dx_dt /= norm;
         dy_dt /= norm;
 
-        // First check if circle and box intersect at all
-        double R = fabs(1/K);
-        vertex normal{-dy_dt, dx_dt};
-        vertex C{(P[0]+R*normal[0]), (P[1]+R*normal[1])};
+        vertex N{-dy_dt, dx_dt};
+        double R = fabs(1.0/K);
 
-        //double volfrac = ComputeCircleBoxIntersection(C, R, 0.0, 1.0, 0.0, 1.0);
-        double volfrac = model->Predict(P[0], P[1], -dy_dt, dx_dt, fabs(K));
-        if (K<0){
+        if (K < 0.0) {
+            N[0] = -N[0];
+            N[1] = -N[1];
+        }
+        vertex C{(P[0]+R*N[0]), (P[1]+R*N[1])};
+
+        double input[5] = {P[0], P[1], N[0], N[1], fabs(K)};
+        double volfrac = model->Predict(input);
+        //volfrac = ComputeCircleBoxIntersection(C, R, 0.0, 1.0, 0.0, 1.0);
+        if (volfrac > 1.0){
+            volfrac = 1.0;
+        }
+        if (volfrac < 0.0){
+            volfrac = 0.0;
+        }
+        if (K < 0.0){
             volfrac = 1.0 - volfrac;
         }
+
         cells[i].volfrac = volfrac;
     }
 }
-#endif
 
 double Grid::ComputeTotalVolume(){
     double total_volume = 0.0;
@@ -501,4 +512,8 @@ void Grid::ExportToVTK(const std::string& filename) {
     }
     
     std::cout << "VTK file exported successfully to: " << filename << std::endl;
+}
+
+void Grid::addModel(const std::string& filename) {
+    model = new Model(filename);
 }

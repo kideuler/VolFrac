@@ -4,6 +4,7 @@
 #include "IntervalTree.hpp"
 #include "KDTree.hpp"
 #include "CircleVolFrac.hpp"
+#include "Model.hpp"
 #include <memory>
 #include <fstream>
 #include <iostream>
@@ -43,9 +44,8 @@ class Grid {
 
         void ComputeVolumeFractionsCurv(); // Compute the volume fractions of the cells using circle method
 
-#ifdef USE_TORCH
         void ComputeVolumeFractionsAI(); // Compute the volume fractions of the cells using Neural Network model
-#endif
+
         double ComputeTotalVolume(); // Compute the total volume of the grid
 
         void ZeroVolumeFractions(); // Set all volume fractions to zero
@@ -53,6 +53,8 @@ class Grid {
         void ResetBox(BBox box, int nx, int ny); // Reset the box and grid size
 
         void ExportToVTK(const std::string& filename);
+
+        void addModel(const std::string& filename);
 
     private:
         BBox box;
@@ -70,9 +72,8 @@ class Grid {
     public:
         vector<vertex> points;
         vector<cell> cells;
-#ifdef USE_TORCH
-        TorchWrapper *model = nullptr;
-#endif
+
+        Model *model = nullptr;
 };
 
 #endif

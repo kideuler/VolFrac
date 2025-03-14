@@ -24,7 +24,7 @@ save_path = 'models/'
 load_model = False
 model_path = 'models/model_weights.pth'
 save_frequency = 0
-num_epochs = 5000
+num_epochs = 500
 
 try:
     arguments, values = getopt.getopt(argumentList, options, long_options)
@@ -77,7 +77,7 @@ torch.jit.script(norm_module).save(save_path + "/normalization.pt")
 
 # Training loop with early stopping
 best_val_loss = float('inf')
-patience = 50
+patience = 20
 patience_counter = 0
 grad_clip = 1.0
 

@@ -7,12 +7,6 @@ using namespace std;
 
 int main(int argc, char** argv) {
 
-#ifdef USE_TORCH
-    TorchWrapper model("../../models/VolFracRL.pt", "../../models/normalization.pt");
-#else
-    std::cout << "Torch not enabled" << std::endl;
-#endif
-
     int shape = 0;
     if (argc > 1) {
         shape = atoi(argv[1]);
@@ -23,19 +17,17 @@ int main(int argc, char** argv) {
     BBox box{0.3, 0.7, 0.3, 0.7};
     Grid grid = CreateGrid(box, 5, 5, shape, 50000);
     double exact = exacts[shape];
-#ifdef USE_TORCH
-    grid.model = &model;
-#endif
+
+    grid.addModel("model.dat");
+
     vector<int> sizes = {32,64,128,256,512,1024,2048,4096};
     vector<string> sizes_str;
     for (int size : sizes) {
         sizes_str.push_back(to_string(size));
     }
-#ifdef USE_TORCH
+
     vector<string> headers = {"Sizes","Cross","PIB 10", "PIB 50", "OscCircle", "AI"};
-#else
-    vector<string> headers = {"Sizes","Cross","PIB 10", "PIB 50", "OscCircle"};
-#endif
+
     for (const auto& header : headers) {
         cout << setw(column_width) << header << " ";
     }
@@ -72,12 +64,11 @@ int main(int argc, char** argv) {
         grid.ZeroVolumeFractions();
 
         // AI method
-#ifdef USE_TORCH
         grid.ComputeVolumeFractionsAI();
         result = 100.0*fabs(grid.ComputeTotalVolume() - exact) / exact;
         row.push_back(result);
+        grid.ExportToVTK("Accuracy_"+shape_names[shape]+"_"+sizes_str[i]+".vtk");
         grid.ZeroVolumeFractions();
-#endif
         data.push_back(row);
 
         // print the row

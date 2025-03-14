@@ -25,6 +25,8 @@ inline double SiLU(double x) {
     return x / (1.0 + std::exp(-x));
 }
 
+// Define the static activation function m
+
 class Model {
     public:
         // Activation function type
@@ -43,27 +45,25 @@ class Model {
 
         double Predict(double input[5]);
 
+        const std::unordered_map<std::string, Model::ActivationFunction> activationMap = {
+            {"ReLU", ReLU},
+            {"Tanh", Tanh},
+            {"SiLU", SiLU},
+            // Add more activation functions as needed
+        };
+
 
     private:
         std::vector<Matrix> weights;
         std::vector<Vector> biases;
         std::string activation_function;
         ActivationFunction activation;
-        static const std::unordered_map<std::string, ActivationFunction> activationMap;
     
         // Normalization parameters
         Vector input_mean;
         Vector input_std;
         double output_mean;
         double output_std;
-};
-
-// Define the static activation function map
-const std::unordered_map<std::string, Model::ActivationFunction> Model::activationMap = {
-    {"ReLU", ReLU},
-    {"Tanh", Tanh},
-    {"SiLU", SiLU},
-    // Add more activation functions as needed
 };
 
 #endif // __MODEL_HPP__
