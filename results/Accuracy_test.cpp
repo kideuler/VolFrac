@@ -26,7 +26,7 @@ int main(int argc, char** argv) {
         sizes_str.push_back(to_string(size));
     }
 
-    vector<string> headers = {"Sizes","Cross","PIB 10", "PIB 50", "OscCircle", "AI"};
+    vector<string> headers = {"Sizes","Cross","PIB 10", "PIB 50", "OscCircle"};
 
     for (const auto& header : headers) {
         cout << setw(column_width) << header << " ";
@@ -37,6 +37,7 @@ int main(int argc, char** argv) {
     for (int i = 0; i < sizes.size(); i++) {
         vector<double> row;
         grid.ResetBox(box, sizes[i], sizes[i]);
+        grid.PreComputeClosestPoints();
         row.push_back(sizes[i]);
 
         // cross
@@ -64,12 +65,11 @@ int main(int argc, char** argv) {
         grid.ZeroVolumeFractions();
 
         // AI method
-        grid.ComputeVolumeFractionsAI();
-        result = 100.0*fabs(grid.ComputeTotalVolume() - exact) / exact;
-        row.push_back(result);
-        grid.ExportToVTK("Accuracy_"+shape_names[shape]+"_"+sizes_str[i]+".vtk");
-        grid.ZeroVolumeFractions();
-        data.push_back(row);
+        // grid.ComputeVolumeFractionsAI();
+        // result = 100.0*fabs(grid.ComputeTotalVolume() - exact) / exact;
+        // row.push_back(result);
+        // grid.ZeroVolumeFractions();
+        // data.push_back(row);
 
         // print the row
         for (const auto& value : row) {

@@ -25,6 +25,21 @@ Grid::Grid(BBox box, int nx, int ny){
     }
 }
 
+static inline vertex SelectNearest(cell &c, vertex center, vertex P){
+    double dx1 = center[0] - P[0];
+    double dy1 = center[1] - P[1];
+    double d1 = sqrt(dx1 * dx1 + dy1 * dy1);
+
+    double dx2 = center[0] - c.closest_point[0];
+    double dy2 = center[1] - c.closest_point[1];
+    double d2 = sqrt(dx2 * dx2 + dy2 * dy2);
+    if (d1 < d2){
+        return P;
+    } else {
+        return c.closest_point;
+    }
+}
+
 void Grid::AddShape(std::unique_ptr<IntervalTree<Axis::Y>> bdy){
     shapes.push_back(std::move(bdy));
 
@@ -54,6 +69,12 @@ void Grid::AddShape(std::unique_ptr<IntervalTree<Axis::Y>> bdy){
         cells[c1].loc_type = 1;
         cells[c2].loc_type = 1;
 
+        // cell centers
+        vertex center1 = {box.x_min + (i1 + 0.5)*dx, box.y_min + (j1 + 0.5)*dy};
+        vertex center2 = {box.x_min + (i2 + 0.5)*dx, box.y_min + (j2 + 0.5)*dy};
+        cells[c1].closest_point = SelectNearest(cells[c1], center1, P1);
+        cells[c2].closest_point = SelectNearest(cells[c2], center2, P2);
+
         // get all cells that the line between P1 and P2 crosses
         int x1 = i1, y1 = j1;
         int x2 = i2, y2 = j2;
@@ -67,6 +88,10 @@ void Grid::AddShape(std::unique_ptr<IntervalTree<Axis::Y>> bdy){
         while (true) {
             int cell_index = x + y*(nx-1);
             cells[cell_index].loc_type = 1;
+            // cell center
+            vertex center = {box.x_min + (x + 0.5)*dx, box.y_min + (y + 0.5)*dy};
+            cells[cell_index].closest_point = SelectNearest(cells[cell_index], center, P1);
+            cells[cell_index].closest_point = SelectNearest(cells[cell_index], center, P2);
             if (x == x2 && y == y2)
                 break;
             int e2 = 2 * err;
@@ -82,23 +107,37 @@ void Grid::AddShape(std::unique_ptr<IntervalTree<Axis::Y>> bdy){
     }
 
     // loop through all cells and add adjacent cells to cross boundary true
-    for (int n = 0; n < 1; n++) {
+    for (int n = 0; n < 2; n++) {
         vector<bool> visited(cells.size(), false);
         for (size_t i = 0; i < cells.size(); i++) {
             if (cells[i].loc_type == 1) {
                 int x = i % (nx-1);
                 int y = i / (nx-1);
+                int cell_index = x + y*(nx-1);
+                vertex cp = cells[cell_index].closest_point;
                 if (x > 0) {
                     visited[i-1] = true;
+                    int cell_index2 = x-1 + y*(nx-1);
+                    vertex center = {box.x_min + (x - 0.5)*dx, box.y_min + (y + 0.5)*dy};
+                    cells[cell_index2].closest_point = SelectNearest(cells[cell_index2], center, cp);
                 }
                 if (x < nx-1) {
                     visited[i+1] = true;
+                    int cell_index2 = x+1 + y*(nx-1);
+                    vertex center = {box.x_min + (x + 1.5)*dx, box.y_min + (y + 0.5)*dy};
+                    cells[cell_index2].closest_point = SelectNearest(cells[cell_index2], center, cp);
                 }
                 if (y > 0) {
                     visited[i-(nx-1)] = true;
+                    int cell_index2 = x + (y-1)*(nx-1);
+                    vertex center = {box.x_min + (x + 0.5)*dx, box.y_min + (y - 0.5)*dy};
+                    cells[cell_index2].closest_point = SelectNearest(cells[cell_index2], center, cp);
                 }
                 if (y < ny-1) {
                     visited[i+(nx-1)] = true;
+                    int cell_index2 = x + (y+1)*(nx-1);
+                    vertex center = {box.x_min + (x + 0.5)*dx, box.y_min + (y + 1.5)*dy};
+                    cells[cell_index2].closest_point = SelectNearest(cells[cell_index2], center, cp);
                 }
             }
         }
@@ -198,14 +237,12 @@ void Grid::ComputeVolumeFractionsCurv(){
         double y_max = points[cell.indices[2]][1];
 
         vertex cell_center{(x_min + x_max) / 2, (y_min + y_max) / 2};
-        vertex P; 
+        vertex P = cell.closest_point; 
         vertex N;
-        double data[5];
-        kd_trees[0].Search(cell_center, P, data); // data constains derivative and curvature information
-        double R = fabs(1.0/data[4]);
-        N[0] = -data[1];
-        N[1] = data[0];
-        if (data[4] < 0.0) {
+        double R = fabs(1.0/cell.closest_data[4]);
+        N[0] = -cell.closest_data[1];
+        N[1] = cell.closest_data[0];
+        if (cell.closest_data[4] < 0.0) {
             N[0] = -N[0];
             N[1] = -N[1];
         }
@@ -217,7 +254,7 @@ void Grid::ComputeVolumeFractionsCurv(){
         if (volfrac > 1.0){
             volfrac = 1.0;
         }
-        if (data[4] < 0.0) {
+        if (cell.closest_data[4] < 0.0) {
             volfrac = 1.0 - volfrac;
         }
         cells[i].volfrac = volfrac;
@@ -225,9 +262,114 @@ void Grid::ComputeVolumeFractionsCurv(){
 }
 
 void Grid::ComputeVolumeFractionsAI(){
-    if (points.size() == 0 || cells.size() == 0 || kd_trees.size() == 0 || model == nullptr) {
+    if (points.size() == 0 || cells.size() == 0 || kd_trees.size() == 0) {
         return;
     }
+
+    for (int i = 0; i < cells.size(); i++) {
+        if (!(cells[i].loc_type == 1)) {
+            int count = 0;
+            for (int j = 0; j < 4; j++) {
+                if (inflags[cells[i].indices[j]]) {
+                    count++;
+                }
+            }
+            cells[i].volfrac = double(count) / 4.0;
+            continue;
+        }
+
+        cell cell = cells[i];
+        double x_min = points[cell.indices[0]][0];
+        double x_max = points[cell.indices[1]][0];
+        double y_min = points[cell.indices[0]][1];
+        double y_max = points[cell.indices[2]][1];
+
+        double dx = x_max - x_min;
+        double dy = y_max - y_min;
+
+        vertex cell_center{(x_min + x_max) / 2, (y_min + y_max) / 2};
+        vertex P = cell.closest_point; 
+        double data[5] = {cell.closest_data[0], cell.closest_data[1], cell.closest_data[2], cell.closest_data[3], cell.closest_data[4]};
+        P[0] = (P[0] - x_min) / dx;
+        P[1] = (P[1] - y_min) / dy;
+        double dx_dt = data[0]/dx;
+        double dy_dt = data[1]/dy;
+        double dxx_dt = data[2]/dx;
+        double dyy_dt = data[3]/dy;
+        double K = (dx_dt*dyy_dt - dy_dt*dxx_dt) / pow(dx_dt*dx_dt + dy_dt*dy_dt, 1.5);
+        double norm = sqrt(dx_dt*dx_dt + dy_dt*dy_dt);
+        dx_dt /= norm;
+        dy_dt /= norm;
+
+        vertex N{-dy_dt, dx_dt};
+        double R = fabs(1.0/K);
+
+        if (K < 0.0) {
+            N[0] = -N[0];
+            N[1] = -N[1];
+        }
+        vertex C{(P[0]+R*N[0]), (P[1]+R*N[1])};
+
+        double input[5] = {P[0], P[1], N[0], N[1], fabs(K)};
+        double volfrac = model->Predict(input);
+        //volfrac = ComputeCircleBoxIntersection(C, R, 0.0, 1.0, 0.0, 1.0);
+        if (volfrac > 1.0){
+            volfrac = 1.0;
+        }
+        if (volfrac < 0.0){
+            volfrac = 0.0;
+        }
+        if (K < 0.0){
+            volfrac = 1.0 - volfrac;
+        }
+
+        cells[i].volfrac = volfrac;
+    }
+}
+
+void Grid::PreComputeClosestPoints() {
+    if (points.size() == 0 || cells.size() == 0 || kd_trees.size() == 0) {
+        return;
+    }
+
+    for (size_t i = 0; i < cells.size(); i++) {
+        if (!(cells[i].loc_type == 1)) {
+            continue;
+        }
+
+        cell cell = cells[i];
+        double x_min = points[cell.indices[0]][0];
+        double x_max = points[cell.indices[1]][0];
+        double y_min = points[cell.indices[0]][1];
+        double y_max = points[cell.indices[2]][1];
+
+        vertex cell_center{(x_min + x_max) / 2, (y_min + y_max) / 2};
+        vertex P; 
+        vertex N;
+        double data[5];
+        kd_trees[0].Search(cell_center, P, data); // data constains derivative and curvature information
+        
+        // save the information to the cell
+        cells[i].closest_data[0] = data[0];
+        cells[i].closest_data[1] = data[1];
+        cells[i].closest_data[2] = data[2];
+        cells[i].closest_data[3] = data[3];
+        cells[i].closest_data[4] = data[4];
+        
+        // check if the closest point is already P
+        cells[i].closest_point[0] = P[0];
+        cells[i].closest_point[1] = P[1];
+    }
+}
+
+void Grid::ComputeVolumeFractionsTraining(const std::string &filename){
+    if (points.size() == 0 || cells.size() == 0 || kd_trees.size() == 0) {
+        return;
+    }
+
+    // append data to file
+    std::fstream fid;
+    fid.open(filename, std::ios::app);
 
     for (int i = 0; i < cells.size(); i++) {
         if (!(cells[i].loc_type == 1)) {
@@ -274,9 +416,7 @@ void Grid::ComputeVolumeFractionsAI(){
         }
         vertex C{(P[0]+R*N[0]), (P[1]+R*N[1])};
 
-        double input[5] = {P[0], P[1], N[0], N[1], fabs(K)};
-        double volfrac = model->Predict(input);
-        //volfrac = ComputeCircleBoxIntersection(C, R, 0.0, 1.0, 0.0, 1.0);
+        double volfrac = ComputeCircleBoxIntersection(C, R, 0.0, 1.0, 0.0, 1.0);
         if (volfrac > 1.0){
             volfrac = 1.0;
         }
@@ -288,6 +428,15 @@ void Grid::ComputeVolumeFractionsAI(){
         }
 
         cells[i].volfrac = volfrac;
+        if (fabs(volfrac) < 1e-2 || fabs(volfrac-1.0) < 1e-2) {
+            continue;
+        }
+
+        fid << std::fixed << std::setprecision(10)
+            << P[0] << ", " << P[1] << ", " << N[0] << ", " << N[1] << ", " 
+            << fabs(K) << ", " << volfrac << std::endl;
+
+        
     }
 }
 
@@ -346,15 +495,21 @@ void Grid::ResetBox(BBox box, int nx, int ny){
             vertex P2 = shapes[0]->coordinates[v2];
 
             // find cell index that contains P1 and P2
-            int i1 = int((P1[0] - box.x_min) / dx);
-            int j1 = int((P1[1] - box.y_min) / dy);
+            int i1 = std::floor((P1[0] - box.x_min) / dx);
+            int j1 = std::floor((P1[1] - box.y_min) / dy);
             int c1 = i1 + j1*(nx-1);
-            int i2 = int((P2[0] - box.x_min) / dx);
-            int j2 = int((P2[1] - box.y_min) / dy);
+            int i2 = std::floor((P2[0] - box.x_min) / dx);
+            int j2 = std::floor((P2[1] - box.y_min) / dy);
             int c2 = i2 + j2*(nx-1);
 
             cells[c1].loc_type = 1;
             cells[c2].loc_type = 1;
+
+            // cell centers
+            vertex center1 = {box.x_min + (i1 + 0.5)*dx, box.y_min + (j1 + 0.5)*dy};
+            vertex center2 = {box.x_min + (i2 + 0.5)*dx, box.y_min + (j2 + 0.5)*dy};
+            cells[c1].closest_point = SelectNearest(cells[c1], center1, P1);
+            cells[c2].closest_point = SelectNearest(cells[c2], center2, P2);
 
             // get all cells that the line between P1 and P2 crosses
             int x1 = i1, y1 = j1;
@@ -369,6 +524,10 @@ void Grid::ResetBox(BBox box, int nx, int ny){
             while (true) {
                 int cell_index = x + y*(nx-1);
                 cells[cell_index].loc_type = 1;
+                vertex center = {box.x_min + (x + 0.5)*dx, box.y_min + (y + 0.5)*dy};
+                cells[cell_index].closest_point = SelectNearest(cells[cell_index], center, P1);
+                cells[cell_index].closest_point = SelectNearest(cells[cell_index], center, P2);
+
                 if (x == x2 && y == y2)
                     break;
                 int e2 = 2 * err;
@@ -384,29 +543,45 @@ void Grid::ResetBox(BBox box, int nx, int ny){
         }
 
         // loop through all cells and add adjacent cells to cross boundary true
-        vector<bool> visited(cells.size(), false);
-        for (size_t i = 0; i < cells.size(); i++) {
-            if (cells[i].loc_type == 1) {
-                int x = i % (nx-1);
-                int y = i / (nx-1);
-                if (x > 0) {
-                    visited[i-1] = true;
-                }
-                if (x < nx-2) {
-                    visited[i+1] = true;
-                }
-                if (y > 0) {
-                    visited[i-(nx-1)] = true;
-                }
-                if (y < ny-2) {
-                    visited[i+(nx-1)] = true;
+        for (int n = 0; n < 1; n++) {
+            vector<bool> visited(cells.size(), false);
+            for (size_t i = 0; i < cells.size(); i++) {
+                if (cells[i].loc_type == 1) {
+                    int x = i % (nx-1);
+                    int y = i / (nx-1);
+                    int cell_index = x + y*(nx-1);
+                    vertex cp = cells[cell_index].closest_point;
+                    if (x > 0) {
+                        visited[i-1] = true;
+                        int cell_index2 = x-1 + y*(nx-1);
+                        vertex center = {box.x_min + (x - 0.5)*dx, box.y_min + (y + 0.5)*dy};
+                        cells[cell_index2].closest_point = SelectNearest(cells[cell_index2], center, cp);
+                    }
+                    if (x < nx-1) {
+                        visited[i+1] = true;
+                        int cell_index2 = x+1 + y*(nx-1);
+                        vertex center = {box.x_min + (x + 1.5)*dx, box.y_min + (y + 0.5)*dy};
+                        cells[cell_index2].closest_point = SelectNearest(cells[cell_index2], center, cp);
+                    }
+                    if (y > 0) {
+                        visited[i-(nx-1)] = true;
+                        int cell_index2 = x + (y-1)*(nx-1);
+                        vertex center = {box.x_min + (x + 0.5)*dx, box.y_min + (y - 0.5)*dy};
+                        cells[cell_index2].closest_point = SelectNearest(cells[cell_index2], center, cp);
+                    }
+                    if (y < ny-1) {
+                        visited[i+(nx-1)] = true;
+                        int cell_index2 = x + (y+1)*(nx-1);
+                        vertex center = {box.x_min + (x + 0.5)*dx, box.y_min + (y + 1.5)*dy};
+                        cells[cell_index2].closest_point = SelectNearest(cells[cell_index2], center, cp);
+                    }
                 }
             }
-        }
 
-        for (size_t i = 0; i < cells.size(); i++) {
-            if (visited[i]) {
-                cells[i].loc_type = 1;
+            for (size_t i = 0; i < cells.size(); i++) {
+                if (visited[i]) {
+                    cells[i].loc_type = 1;
+                }
             }
         }
     }

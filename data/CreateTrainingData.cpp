@@ -5,7 +5,7 @@
 
 int main(int argc, char** argv) {
 
-    int nruns = 200000;
+    int nruns = 20000;
     if (argc > 1){
         nruns = atoi(argv[1]);
     }
@@ -19,9 +19,9 @@ int main(int argc, char** argv) {
     for (int n = 0; n<nruns; n++){
         // random point on unit square
         double x = (double)rand() / RAND_MAX;
-        x = 3.0*x - 1.0;
+        //x = 3.0*x - 1.0;
         double y = (double)rand() / RAND_MAX;
-        y = 3.0*y - 1.0;
+        //y = 3.0*y - 1.0;
 
         // random normal vector
         double nx = 2.0*((double)rand() / RAND_MAX)-1.0;
@@ -34,10 +34,10 @@ int main(int argc, char** argv) {
         double K = 0;
         switch (n % 6) {
             case 0:
-                K = 1.0;
+                K = 0.0001;
                 break;
             case 1:
-                K = 0.1;
+                K = 0.001;
                 break;
             case 2:
                 K = 0.01;
@@ -51,7 +51,7 @@ int main(int argc, char** argv) {
             case 5:
                 K = 0.00001;
         }
-        K *= (double)rand() / RAND_MAX;
+        K *= 5*(double)rand() / RAND_MAX;
         
 
         // compute intersection area with unit square

@@ -178,7 +178,7 @@ double Model::Predict(double input[5]) {
     }
 
     // fifth input is log10
-    input_vec[4] = std::log10(input_vec[4]);
+    // input_vec[4] = std::log10(input_vec[4])+1e-10;
     for (int i = 0; i < 5; ++i) {
         input_vec(i) = (input_vec(i) - input_mean(i)) / input_std(i);
     }

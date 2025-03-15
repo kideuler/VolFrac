@@ -146,10 +146,29 @@ class IntervalTree {
     public:
         segment_ids seg_ids;
         coords coordinates;
+        std::vector<std::array<double,5>> data = {};
 
         IntervalTree(segment_ids segs, coords coordinates){
             this->seg_ids = segs;
             this->coordinates = coordinates;
+            int nsegments = segs.size();
+            this->segments.resize(nsegments);
+            for (int i = 0; i<nsegments; i++){
+                this->segments[i] = Segment<T>(coordinates[segs[i][0]], coordinates[segs[i][1]]);
+            }
+
+            root = new IntervalNode<T>();
+            // copy the segments to the root node
+            for (auto segment : this->segments) {
+                root->segments.push_back(segment);
+            }
+            root->Construct();
+        };
+
+        IntervalTree(segment_ids segs, coords coordinates, std::vector<std::array<double,5>> data){
+            this->seg_ids = segs;
+            this->coordinates = coordinates;
+            this->data = data;
             int nsegments = segs.size();
             this->segments.resize(nsegments);
             for (int i = 0; i<nsegments; i++){

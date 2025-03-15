@@ -41,7 +41,7 @@ TEST(VolumeFractionCurveTest, ComputeVolumeFractionsCircle){
     grid.AddTree(tree);
     auto shape = std::make_unique<IntervalTree<Axis::Y>>(segments, coordinates);
     grid.AddShape(std::move(shape));
-
+    grid.PreComputeClosestPoints();
     grid.ComputeVolumeFractionsCurv();
 
     double exact = pi/4.0;
@@ -93,7 +93,7 @@ TEST(VolumeFractionCurveTest, ComputeVolumeFractionsEllipse){
     grid.AddTree(tree);
     auto shape = std::make_unique<IntervalTree<Axis::Y>>(segments, coordinates);
     grid.AddShape(std::move(shape));
-
+    grid.PreComputeClosestPoints();
     grid.ComputeVolumeFractionsCurv();
 
     double exact = pi*0.02;
@@ -143,7 +143,7 @@ TEST(VolumeFractionCurveTest, ComputeVolumeFractionsFlower){
     grid.AddTree(tree);
     auto shape = std::make_unique<IntervalTree<Axis::Y>>(segments, coordinates);
     grid.AddShape(std::move(shape));
-
+    grid.PreComputeClosestPoints();
     grid.ComputeVolumeFractionsCurv();
 
     double exact = 0.0075*M_PI;

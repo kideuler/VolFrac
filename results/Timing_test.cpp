@@ -45,6 +45,7 @@ int main(int argc, char** argv){
         vector<double> row;
         grid.ResetBox(box, sizes[i], sizes[i]);
         row.push_back(sizes[i]);
+        grid.PreComputeClosestPoints();
 
         // pib 3
         start = std::chrono::high_resolution_clock::now();

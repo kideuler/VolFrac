@@ -16,6 +16,7 @@ Grid CreateGrid(BBox box, int nx, int ny, int shape_type, int nsegs = 10000) {
     coords coordinates;
     KDTree<5> tree;
     segment_ids segments;
+    std::vector<std::array<double,5>> data;
 
     switch (shape_type){
         case 0: // Ellipse
@@ -36,6 +37,8 @@ Grid CreateGrid(BBox box, int nx, int ny, int shape_type, int nsegs = 10000) {
                 dx /= nrm;
                 dy /= nrm;
                 double arr[5] = {dx, dy, dxx, dyy, k};
+                std::array<double,5> arr2 = {dx, dy, dxx, dyy, k};
+                data.push_back(arr2);
 
 
                 tree.Insert(P, arr);
@@ -62,6 +65,8 @@ Grid CreateGrid(BBox box, int nx, int ny, int shape_type, int nsegs = 10000) {
                 dy /= nrm;
 
                 double arr[5] = {dx, dy, dxx, dyy, k};
+                std::array<double,5> arr2 = {dx, dy, dxx, dyy, k};
+                data.push_back(arr2);
 
                 tree.Insert(P, arr);
                 segments.push_back({i, (i + 1) % num_segments});
@@ -85,6 +90,8 @@ Grid CreateGrid(BBox box, int nx, int ny, int shape_type, int nsegs = 10000) {
                 dx /= nrm;
                 dy /= nrm;
                 double arr[5] = {dx, dy, dxx, dyy, k};
+                std::array<double,5> arr2 = {dx, dy, dxx, dyy, k};
+                data.push_back(arr2);
 
                 tree.Insert(P, arr);
                 segments.push_back({i, (i + 1) % num_segments});
@@ -92,7 +99,7 @@ Grid CreateGrid(BBox box, int nx, int ny, int shape_type, int nsegs = 10000) {
             break;
     }
 
-    auto shape = std::make_unique<IntervalTree<Axis::Y>>(segments, coordinates);
+    auto shape = std::make_unique<IntervalTree<Axis::Y>>(segments, coordinates, data);
     grid.AddShape(std::move(shape));
     grid.AddTree(tree);
     

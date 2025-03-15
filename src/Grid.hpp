@@ -25,7 +25,8 @@ struct cell {
     double volume;
     double volfrac = 0.0;
     int8_t loc_type = 0;
-    int closest_center = -1;
+    double closest_data[5] {0.0, 0.0, 0.0, 0.0, 0.0};
+    array<double,2> closest_point = {0.0, 0.0};
 };
 
 class Grid {
@@ -46,6 +47,10 @@ class Grid {
 
         void ComputeVolumeFractionsAI(); // Compute the volume fractions of the cells using Neural Network model
 
+        void PreComputeClosestPoints(); // Precompute the closest points to the shapes
+
+        void ComputeVolumeFractionsTraining(const std::string &filename);
+
         double ComputeTotalVolume(); // Compute the total volume of the grid
 
         void ZeroVolumeFractions(); // Set all volume fractions to zero
@@ -64,7 +69,6 @@ class Grid {
         double dy;
         int ncellsx;
         int ncellsy;
-        int first_cell_index = 0;
         vector<std::unique_ptr<IntervalTree<Axis::Y>>> shapes;
         vector<KDTree<5>> kd_trees;
         vector<bool> inflags;

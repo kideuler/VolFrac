@@ -71,7 +71,7 @@ class RelativeMSELoss(nn.Module):
 class VolFracDataSet(Dataset):
     def __init__(self, filename):
         xy = np.loadtxt(filename, delimiter=',', dtype=np.float32)
-        xy[:, 4] = np.log10(xy[:, 4] + 1e-10) # Log transform the curvature
+        # xy[:, 4] = np.log10(xy[:, 4] + 1e-10) # Log transform the curvature
         self.x = torch.from_numpy(xy[:, [0,1,2,3,4]].astype(np.float32))
         self.y = torch.from_numpy(xy[:, 5].astype(np.float32)).view(-1, 1)
         print(self.x.min())
@@ -116,19 +116,24 @@ class VolFracDataSet(Dataset):
         return self.x_test, self.y_test
 
 class NeuralNet(nn.Module):
-    def __init__(self, input_size, num_classes):
+    def __init__(self, input_size, hidden_sizes=[32, 64, 128, 64, 32], num_classes=1):
         super(NeuralNet, self).__init__()
         
-        # Define network architecture with 4 hidden layers (matching the original's depth)
-        # Layer sizes match the original's progression: 64 -> 128 -> 128 -> 64
-        self.layer1 = nn.Linear(input_size, 10)
-        self.layer2 = nn.Linear(10, 10)
-        self.layer3 = nn.Linear(10, 10)
-        self.layer4 = nn.Linear(10, 10)
-        self.output_layer = nn.Linear(10, num_classes)
+        self.hidden_sizes = hidden_sizes
+        self.layers = nn.ModuleList()
+        
+        # Input layer
+        self.layers.append(nn.Linear(input_size, hidden_sizes[0]))
+        
+        # Hidden layers
+        for i in range(1, len(hidden_sizes)):
+            self.layers.append(nn.Linear(hidden_sizes[i-1], hidden_sizes[i]))
+        
+        # Output layer
+        self.output_layer = nn.Linear(hidden_sizes[-1], num_classes)
         
         # Activation function
-        self.activation = nn.ReLU()  # SiLU/Swish often performs better than ReLU for regression
+        self.activation = nn.ReLU()
         
         # Initialize weights
         self.apply(self._init_weights)
@@ -140,10 +145,11 @@ class NeuralNet(nn.Module):
                 nn.init.zeros_(module.bias)
     
     def forward(self, x):
-        x = self.activation(self.layer1(x))
-        x = self.activation(self.layer2(x))
-        x = self.activation(self.layer3(x))
-        x = self.activation(self.layer4(x))
+        for i, layer in enumerate(self.layers):
+            x = layer(x)
+            x = self.activation(x)
+        
+        # Final output layer (no activation)
         x = self.output_layer(x)
         return x
 
@@ -155,3 +161,49 @@ class NormalizationModule(torch.nn.Module):
         self.register_buffer('x_std', x_std)
         self.register_buffer('y_mean', torch.tensor([y_mean]))
         self.register_buffer('y_std', torch.tensor([y_std]))
+
+
+def Write_model(filename,norm_module,dataset,model):
+    with open(filename, "w") as f:
+
+        f.write(f"# data means\n")
+        for x in norm_module.x_mean.tolist():
+            f.write(f"{x} ")
+        f.write(f"{dataset.y_mean}\n")
+        f.write(f"\n# data standard deviation\n")
+        for x in norm_module.x_std.tolist():
+            f.write(f"{x} ")
+        f.write(f"{dataset.y_std}\n")
+
+        # Write model architecture information
+        f.write(f"\n# Model Architecture\n")
+        
+        # Get activation function name
+        activation_name = model.activation.__class__.__name__
+        f.write(f"Activation_function = {activation_name}\n")
+        
+        # Number of layers
+        num_layers = len([name for name, _ in model.named_parameters() if 'weight' in name])
+        f.write(f"Number_of_layers = {num_layers}\n")
+
+        # Write parameters for each layer
+        for name, param in model.named_parameters():
+            f.write(f"\n# Layer: {name}\n")
+            
+            # For weights (2D tensors)
+            if len(param.shape) == 2:
+                sz = list(param.shape)
+                f.write(f"{sz[0]} {sz[1]}\n")
+                for i in range(param.shape[0]):
+                    for j in range(param.shape[1]):
+                        f.write(f"{param[i,j].item():.12f} ")
+                    f.write(f"\n")
+            # For biases (1D tensors)
+            elif len(param.shape) == 1:
+                sz = list(param.shape)
+                f.write(f"{sz[0]}\n")
+                for i in range(param.shape[0]):
+                    f.write(f"{param[i].item():.12f} ")
+                f.write(f"\n")
+            else:
+                f.write(f"# Skipping parameter with unusual shape: {param.shape}\n")

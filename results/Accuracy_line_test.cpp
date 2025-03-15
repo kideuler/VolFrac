@@ -8,11 +8,7 @@ using namespace std;
 int main(){
     int nruns = 100000;
 
-#ifdef USE_TORCH
-    TorchWrapper model("../../models/VolFracRL.pt", "../../models/normalization.pt");
-#else
-    std::cout << "Torch not enabled" << std::endl;
-#endif
+    Model model("model.dat");
     double x1 = 0.0; double x2 = 1.0;
 
     vector<double> totals = {0.0, 0.0, 0.0, 0.0};
@@ -36,19 +32,16 @@ int main(){
 
         double k = 1e-5; // approximate curvature
 
-#ifdef USE_TORCH
-        // Use the AI method to predict the volume fraction
-        double volfracAI = 1.0-model.Predict(P[0], P[1], normal[0], normal[1], k);
-#else
-        double volfracAI = 0.0;
-#endif
+        double input[5] = {P[0], P[1], normal[0], normal[1], k};
+        double volfracAI = 1.0 - model.Predict(input);
+
         
         // Use Osculating Circle method to compute the exact volume fraction
         vertex C({P[0] + (1.0/k)*normal[0], P[1] + (1.0/k)*normal[1]});
         double volfracOsc = 1.0-ComputeCircleBoxIntersection(C, 1.0/k, 0.0, 1.0, 0.0, 1.0);
 
         // Compute PIB10
-        int np = 10;
+        int np = 5;
         double T = double(np*np);
         double p = 0.0;
         for (int i = 0; i < np; i++){
@@ -102,15 +95,7 @@ int main(){
     totals[2] /= nruns;
     totals[3] /= nruns;
 
-#ifdef USE_TORCH
-    vector<string> headers = {"PIB 10", "PIB 50", "OscCircle", "AI"};
-#else
-    vector<string> headers = {"PIB 10", "PIB 50", "OscCircle"};
-#endif
-
-#ifndef USE_TORCH
-    totals.pop_back();
-#endif
+    vector<string> headers = {"PIB 5", "PIB 50", "OscCircle", "AI"};
 
     for (const auto& header : headers) {
         cout << setw(column_width) << header << " ";

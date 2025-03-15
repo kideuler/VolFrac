@@ -21,12 +21,12 @@ add_custom_target(results
     && ${CMAKE_CURRENT_BINARY_DIR}/Accuracy_test 2
     && echo "Running Accuracy test on Line"
     && ${CMAKE_CURRENT_BINARY_DIR}/Accuracy_line_test
-    && echo "Running Timing test on 100 point Ellipse"
-    && ${CMAKE_CURRENT_BINARY_DIR}/Timing_test
-    && echo "Running Timing test on 1000 point Ellipse"
-    && ${CMAKE_CURRENT_BINARY_DIR}/Timing_test 1000
+    && echo "Running Timing test on 500 point Ellipse"
+    && ${CMAKE_CURRENT_BINARY_DIR}/Timing_test 500
     && echo "Running Timing test on 5000 point Ellipse"
     && ${CMAKE_CURRENT_BINARY_DIR}/Timing_test 5000
+    && echo "Running Timing test on 50000 point Ellipse"
+    && ${CMAKE_CURRENT_BINARY_DIR}/Timing_test 50000
     DEPENDS Accuracy_test Accuracy_line_test Timing_test
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     COMMENT "Running tests to generate results"
