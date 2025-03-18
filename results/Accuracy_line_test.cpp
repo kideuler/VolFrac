@@ -110,7 +110,13 @@ int main(){
     // Make the table
     vector<vector<double>> data = {totals};
 
-    WriteLatexTable("Accuracy_line_test.tex", headers, data, "Volume fraction perecnt error for a straight line with curvature approximation of 1e-5");
+    std::string filename = "Accuracy_line_test.tex";
+    if (headers[headers.size()-1] == "AI"){
+        filename = "Accuracy_line_test_AI.tex";
+    }
+
+
+    WriteLatexTable(filename, headers, data, "Volume fraction perecnt error for a straight line with curvature approximation of 1e-5");
 
 
     return 0;

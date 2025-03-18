@@ -20,6 +20,7 @@ Model::Model(const std::string& filename) {
     while (means_stream >> value) {
         means.push_back(value);
     }
+    input_size = means.size() - 1;
     
     // Skip empty line and "# data standard deviation" line
     std::getline(file, line);
@@ -34,14 +35,15 @@ Model::Model(const std::string& filename) {
     }
     
     // Input/Output normalization
-    input_mean = Vector(5);
-    input_std = Vector(5);
-    for (int i = 0; i < 5; ++i) {
+    int isz = input_size;
+    input_mean = Vector(isz);
+    input_std = Vector(isz);
+    for (int i = 0; i < isz; ++i) {
         input_mean(i) = means[i];
         input_std(i) = stds[i];
     }
-    output_mean = means[5];
-    output_std = stds[5];
+    output_mean = means[isz];
+    output_std = stds[isz];
     
     // Skip lines until we reach "# Model Architecture"
     while (std::getline(file, line) && line != "# Model Architecture");
@@ -172,14 +174,15 @@ void Model::PrintModel() {
 
 double Model::Predict(double input[5]) {
     // Normalize input
-    Vector input_vec(5);
-    for (int i = 0; i < 5; ++i) {
+    int isz = input_size;
+    Vector input_vec(isz);
+    for (int i = 0; i < isz; ++i) {
         input_vec(i) = input[i];
     }
 
     // fifth input is log10
-    // input_vec[4] = std::log10(input_vec[4])+1e-10;
-    for (int i = 0; i < 5; ++i) {
+    input_vec[4] = std::log10(input_vec[4])+1e-10;
+    for (int i = 0; i < isz; ++i) {
         input_vec(i) = (input_vec(i) - input_mean(i)) / input_std(i);
     }
     
@@ -187,7 +190,10 @@ double Model::Predict(double input[5]) {
     Vector output;
     for (size_t i = 0; i < weights.size(); ++i) {
         output = weights[i] * input_vec + biases[i];
-        applyActivation(output);
+        // Apply activation to all layers except the last one
+        if (i < weights.size() - 1) {
+            applyActivation(output);
+        }
         input_vec = output;
     }
     

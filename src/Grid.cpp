@@ -428,9 +428,6 @@ void Grid::ComputeVolumeFractionsTraining(const std::string &filename){
         }
 
         cells[i].volfrac = volfrac;
-        if (fabs(volfrac) < 1e-2 || fabs(volfrac-1.0) < 1e-2) {
-            continue;
-        }
 
         fid << std::fixed << std::setprecision(10)
             << P[0] << ", " << P[1] << ", " << N[0] << ", " << N[1] << ", " 

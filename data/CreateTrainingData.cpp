@@ -5,7 +5,7 @@
 
 int main(int argc, char** argv) {
 
-    int nruns = 20000;
+    int nruns = 200000;
     if (argc > 1){
         nruns = atoi(argv[1]);
     }
@@ -16,12 +16,14 @@ int main(int argc, char** argv) {
     std::fstream fid;
     fid.open("VolFracData.dat", std::ios::out);
 
+    int ncirc = 10000;
+
     for (int n = 0; n<nruns; n++){
         // random point on unit square
         double x = (double)rand() / RAND_MAX;
-        //x = 3.0*x - 1.0;
+        x = 2.0*x - 0.5;
         double y = (double)rand() / RAND_MAX;
-        //y = 3.0*y - 1.0;
+        y = 2.0*y - 0.5;
 
         // random normal vector
         double nx = 2.0*((double)rand() / RAND_MAX)-1.0;
@@ -31,27 +33,9 @@ int main(int argc, char** argv) {
         ny /= nrm;
 
         // random curvature on a log scale
-        double K = 0;
-        switch (n % 6) {
-            case 0:
-                K = 0.0001;
-                break;
-            case 1:
-                K = 0.001;
-                break;
-            case 2:
-                K = 0.01;
-                break;
-            case 3:
-                K = 0.001;
-                break;
-            case 4:
-                K = 0.0001;
-                break;
-            case 5:
-                K = 0.00001;
-        }
-        K *= 5*(double)rand() / RAND_MAX;
+        double exp = 5.0*((double)rand() / RAND_MAX) - 6.0;
+        double K = pow(10, exp);
+        
         
 
         // compute intersection area with unit square
@@ -66,8 +50,7 @@ int main(int argc, char** argv) {
 
         // print the data
         fid << std::fixed << std::setprecision(10)
-            << x << ", " << y << ", " << nx << ", " << ny << ", " 
-            << K << ", " << area << std::endl;
+            << x << ", " << y << ", " << nx << ", " << ny << ", " << K << ", " << area << std::endl;
     }
 
     std::cout << "--- Finished the generation of training data ---" << std::endl;

@@ -27,9 +27,9 @@ save_path = 'models/'
 load_model = False
 model_path = 'models/best_model.pth'
 save_frequency = 0
-num_epochs = 100
+num_epochs = 1000
 optimizer_name = "adamW"  # Options: "adam", "adamw", "rmsprop", "adagrad", "onecycle"
-base_lr = 0.005
+base_lr = 0.001
 
 
 try:
@@ -66,7 +66,7 @@ dataloader = DataLoader(dataset, batch_size=128, shuffle=True)
 n_samples, n_features = dataset.x_train.shape
 
 
-model = NeuralNet(input_size=n_features, hidden_sizes=[10,10], num_classes=1)
+model = NeuralNet(input_size=n_features, hidden_sizes=[32,64,128,256,64,32], num_classes=1)
 
 norm_module = NormalizationModule(
     dataset.x_mean,
@@ -77,13 +77,13 @@ norm_module = NormalizationModule(
 
 # Training loop with early stopping
 best_val_loss = float('inf')
-patience = 500
+patience = 100
 patience_counter = 0
 grad_clip = 1.0
 
 # Choose optimizer based on option
 if optimizer_name == "adam":
-    optimizer = Adam(model.parameters(), lr=base_lr, weight_decay=1e-5)
+    optimizer = Adam(model.parameters(), lr=base_lr, weight_decay=0.01)
 elif optimizer_name == "adamw":
     optimizer = AdamW(model.parameters(), lr=base_lr, weight_decay=0.01)
 elif optimizer_name == "rmsprop":
@@ -110,16 +110,18 @@ else:
 # or we're using ReduceLROnPlateau for other optimizers
 if optimizer_name != "onecycle":
     
-    scheduler = CyclicLR(
+    scheduler = OneCycleLR(
         optimizer,
-        base_lr=1e-4,
-        max_lr=0.05,
-        step_size_up=len(dataloader)*5,  # 5 epochs of upward cycle
-        mode='triangular2'  # Learning rate follows a triangular pattern
+        max_lr=base_lr,
+        epochs=num_epochs,
+        steps_per_epoch=len(dataloader),
+        pct_start=0.3,
+        div_factor=10,
+        final_div_factor=100
     )
 
 
-criterion = nn.MSELoss()
+criterion = MAPELoss()
 
 # Initialize lists to store loss history
 train_losses = []
@@ -170,8 +172,8 @@ for epoch in range(num_epochs):
         torch.nn.utils.clip_grad_norm_(model.parameters(), grad_clip)
         optimizer.step()
 
-        # if optimizer_name != "onecycle":
-        #     scheduler.step(epoch)
+        if optimizer_name != "onecycle":
+            scheduler.step(epoch)
 
         running_train_loss += loss.item()
         num_batches += 1
@@ -219,7 +221,7 @@ for epoch in range(num_epochs):
             ax1.set_xlabel('Epoch')
             ax1.set_ylabel('Loss')
             # ax1.set_ylim(0, 2)
-            #ax1.set_yscale('log')  # Use log scale for better visualization
+            ax1.set_yscale('log')  # Use log scale for better visualization
             ax1.grid(True)
             
             # Plot validation loss
@@ -228,7 +230,7 @@ for epoch in range(num_epochs):
             ax2.set_xlabel('Epoch')
             ax2.set_ylabel('Loss')
             # ax2.set_ylim(0, 2)
-            #ax2.set_yscale('log')  # Use log scale for better visualization
+            ax2.set_yscale('log')  # Use log scale for better visualization
             ax2.grid(True)
             
             # Add best validation loss marker

@@ -64,6 +64,8 @@ class Model {
         Vector input_std;
         double output_mean;
         double output_std;
+
+        int input_size;
 };
 
 #endif // __MODEL_HPP__

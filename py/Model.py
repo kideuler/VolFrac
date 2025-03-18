@@ -58,6 +58,25 @@ def find_lr(model, criterion, optimizer, dataloader, start_lr=1e-7, end_lr=1, nu
     print(f"Suggested learning rate: {best_lr:.8f}")
     return best_lr
 
+class MAPELoss(nn.Module):
+    """
+    Mean Absolute Percentage Error Loss:
+    sum(|pred - target|) / sum(|target|)
+    
+    This measures the total absolute error as a percentage of the total target value.
+    """
+    def __init__(self, epsilon=1e-8):
+        super(MAPELoss, self).__init__()
+        self.epsilon = epsilon
+        
+    def forward(self, pred, target):
+        # Add small epsilon to prevent division by zero
+        absolute_errors = torch.abs(pred - target)
+        sum_absolute_errors = torch.sum(absolute_errors)
+        sum_absolute_targets = torch.sum(torch.abs(target)) + self.epsilon
+        
+        return sum_absolute_errors / sum_absolute_targets
+
 class RelativeMSELoss(nn.Module):
     def __init__(self, epsilon=1e-8):
         super(RelativeMSELoss, self).__init__()
@@ -71,7 +90,7 @@ class RelativeMSELoss(nn.Module):
 class VolFracDataSet(Dataset):
     def __init__(self, filename):
         xy = np.loadtxt(filename, delimiter=',', dtype=np.float32)
-        # xy[:, 4] = np.log10(xy[:, 4] + 1e-10) # Log transform the curvature
+        xy[:, 4] = np.log10(xy[:, 4] + 1e-10) # Log transform the curvature
         self.x = torch.from_numpy(xy[:, [0,1,2,3,4]].astype(np.float32))
         self.y = torch.from_numpy(xy[:, 5].astype(np.float32)).view(-1, 1)
         print(self.x.min())
