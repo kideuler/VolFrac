@@ -42,3 +42,7 @@ gtest_discover_tests(ModelTest)
 add_executable(BezierTest BezierTest.cpp)
 target_link_libraries(BezierTest GTest::GTest GTest::Main VolFrac)
 gtest_discover_tests(BezierTest)
+
+add_executable(PolyVolFracTest PolyVolFracTest.cpp)
+target_link_libraries(PolyVolFracTest GTest::GTest GTest::Main VolFrac)
+gtest_discover_tests(PolyVolFracTest)

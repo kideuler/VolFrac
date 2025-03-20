@@ -11,7 +11,7 @@ int main(){
     Model model("model.dat");
     double x1 = 0.0; double x2 = 1.0;
 
-    vector<double> totals = {0.0, 0.0, 0.0, 0.0};
+    vector<double> totals = {0.0, 0.0, 0.0, 0.0, 0.0};
 
     for (int n = 0; n < nruns; n++){
         vector<double> row;
@@ -32,9 +32,13 @@ int main(){
 
         double k = 1e-5; // approximate curvature
 
+        // Use Plane Clipping method to compute the exact volume fraction
+        double planes[1][3] = {{normal[0], normal[1], -P[0]*normal[0] - P[1]*normal[1]}};
+        double volfracPlane = PlaneBoxIntersection(0.0, 1.0, 0.0, 1.0, planes, 1);
+
+        // Use Neural Network to compute the volume fraction
         double input[5] = {P[0], P[1], normal[0], normal[1], k};
         double volfracAI = 1.0 - model.Predict(input);
-
         
         // Use Osculating Circle method to compute the exact volume fraction
         vertex C({P[0] + (1.0/k)*normal[0], P[1] + (1.0/k)*normal[1]});
@@ -74,19 +78,17 @@ int main(){
         }
         double volfracPIB10 = p / T;
 
-        row.push_back(fabs(volfracPIB3 - exact_area) / exact_area * 100);
-        row.push_back(fabs(volfracPIB10 - exact_area) / exact_area * 100);
-        row.push_back(fabs(volfracOsc - exact_area) / exact_area * 100);
-        row.push_back(fabs(volfracAI - exact_area) / exact_area * 100);
-
-        //std::cout << "Exact: " << exact_area << " PIB3: " << volfracPIB3 << " PIB10: " << volfracPIB10 << " Osc: " << volfracOsc << " AI: " << volfracAI << std::endl;
-
-        //std::cout << row[0] << " " << row[1] << " " << row[2] << " " << row[3] << std::endl;
+        row.push_back(fabs(volfracPIB3 - exact_area) / exact_area );
+        row.push_back(fabs(volfracPIB10 - exact_area) / exact_area);
+        row.push_back(fabs(volfracPlane - exact_area) / exact_area);
+        row.push_back(fabs(volfracOsc - exact_area) / exact_area);
+        row.push_back(fabs(volfracAI - exact_area) / exact_area);
 
         totals[0] += row[0];
         totals[1] += row[1];
         totals[2] += row[2];
         totals[3] += row[3];
+        totals[4] += row[4];
 
     }
 
@@ -94,8 +96,9 @@ int main(){
     totals[1] /= nruns;
     totals[2] /= nruns;
     totals[3] /= nruns;
+    totals[4] /= nruns;
 
-    vector<string> headers = {"PIB 5", "PIB 50", "OscCircle", "AI"};
+    vector<string> headers = {"PIB 5", "PIB 50", "Plane Clipping", "OscCircle", "AI"};
 
     for (const auto& header : headers) {
         cout << setw(column_width) << header << " ";

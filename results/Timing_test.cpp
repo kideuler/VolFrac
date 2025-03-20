@@ -21,15 +21,10 @@ int main(int argc, char** argv){
     
     BBox box{0.3, 0.7, 0.3, 0.7};
     Grid grid = CreateGrid(box, 5, 5, 0, np);
-#ifdef USE_TORCH
-    grid.model = &model;
-#endif
+    grid.addModel("model.dat");
+
     vector<int> sizes = {32,64,128,256,512,1024,2048,4096};
-#ifdef USE_TORCH
-    vector<string> headers = {"Sizes","Cross","PIB 3", "PIB 10", "OscCircle", "AI"};
-#else
-    vector<string> headers = {"Sizes","Cross","PIB 10", "PIB 50", "OscCircle"};
-#endif
+    vector<string> headers = {"Sizes","Cross","PIB 10", "PIB 20", "Plane Clipping", "OscCircle","AI"};
     for (const auto& header : headers) {
         cout << setw(column_width) << header << " ";
     }
@@ -67,7 +62,16 @@ int main(int argc, char** argv){
 
         // pib 10
         start = std::chrono::high_resolution_clock::now();
-        grid.ComputeVolumeFractions(50);
+        grid.ComputeVolumeFractions(20);
+        end = std::chrono::high_resolution_clock::now();
+        duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+        seconds = duration.count() / 1000000.0;
+        row.push_back(seconds);
+        grid.ZeroVolumeFractions();
+
+        // plane clipping
+        start = std::chrono::high_resolution_clock::now();
+        grid.ComputeVolumeFractionsPlane();
         end = std::chrono::high_resolution_clock::now();
         duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
         seconds = duration.count() / 1000000.0;
@@ -84,7 +88,6 @@ int main(int argc, char** argv){
         grid.ZeroVolumeFractions();
 
         // AI method
-#ifdef USE_TORCH
         start = std::chrono::high_resolution_clock::now();
         grid.ComputeVolumeFractionsAI();
         end = std::chrono::high_resolution_clock::now();
@@ -92,7 +95,7 @@ int main(int argc, char** argv){
         seconds = duration.count() / 1000000.0;
         row.push_back(seconds);
         grid.ZeroVolumeFractions();
-#endif
+
         data.push_back(row);
 
         // print the row

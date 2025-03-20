@@ -6,6 +6,11 @@ project(VolFracAI)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
+# Find OpenMP
+if (USE_OPENMP)
+    find_package(OpenMP REQUIRED)
+endif()
+
 include(CTest)
 
 # Create a library from all .cpp and .hpp files
@@ -22,6 +27,15 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     "-Wextra"
     "-Wpedantic"
   )
+endif()
+
+# Link OpenMP
+if(USE_OPENMP AND OpenMP_CXX_FOUND)
+    target_link_libraries(VolFrac PUBLIC OpenMP::OpenMP_CXX)
+    target_compile_definitions(VolFrac PUBLIC USE_OPENMP)
+    message(STATUS "OpenMP found and enabled")
+else()
+    message(WARNING "OpenMP not found. Parallel execution will be disabled.")
 endif()
 
 # Include directories

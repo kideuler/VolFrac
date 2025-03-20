@@ -4,12 +4,17 @@
 #include "IntervalTree.hpp"
 #include "KDTree.hpp"
 #include "CircleVolFrac.hpp"
+#include "PolyVolFrac.hpp"
 #include "Model.hpp"
 #include <memory>
 #include <fstream>
 #include <iostream>
 #include <filesystem>
 #include <iomanip>
+
+#ifdef USE_OPENMP
+#include <omp.h>
+#endif
 
 using namespace std;
 
@@ -44,6 +49,8 @@ class Grid {
         void ComputeVolumeFractions(int npaxis); // Compute the volume fractions of the cells
 
         void ComputeVolumeFractionsCurv(); // Compute the volume fractions of the cells using circle method
+
+        void ComputeVolumeFractionsPlane(); // Compute the volume fractions of the cells using plane clipping method
 
         void ComputeVolumeFractionsAI(); // Compute the volume fractions of the cells using Neural Network model
 

@@ -15,7 +15,7 @@ int main(int argc, char** argv) {
     vector<string> shape_names = {"Ellipse", "Flower", "Petals"};
 
     BBox box{0.3, 0.7, 0.3, 0.7};
-    Grid grid = CreateGrid(box, 5, 5, shape, 50000);
+    Grid grid = CreateGrid(box, 5, 5, shape, 100000);
     double exact = exacts[shape];
 
     grid.addModel("model.dat");
@@ -26,7 +26,7 @@ int main(int argc, char** argv) {
         sizes_str.push_back(to_string(size));
     }
 
-    vector<string> headers = {"Sizes","Cross","PIB 10", "PIB 50", "OscCircle", "AI"};
+    vector<string> headers = {"Sizes","Cross","PIB 10", "PIB 20", "Plane Clipping", "OscCircle", "AI"};
 
     for (const auto& header : headers) {
         cout << setw(column_width) << header << " ";
@@ -42,31 +42,37 @@ int main(int argc, char** argv) {
 
         // cross
         grid.ComputeVolumeFractions();
-        result = 100.0*fabs(grid.ComputeTotalVolume() - exact) / exact;
+        result = fabs(grid.ComputeTotalVolume() - exact) / exact;
         row.push_back(result);
         grid.ZeroVolumeFractions();
 
         // pib 3
         grid.ComputeVolumeFractions(10);
-        result = 100.0*fabs(grid.ComputeTotalVolume() - exact) / exact;
+        result = fabs(grid.ComputeTotalVolume() - exact) / exact;
         row.push_back(result);
         grid.ZeroVolumeFractions();
 
         // pib 10
-        grid.ComputeVolumeFractions(50);
-        result = 100.0*fabs(grid.ComputeTotalVolume() - exact) / exact;
+        grid.ComputeVolumeFractions(20);
+        result = fabs(grid.ComputeTotalVolume() - exact) / exact;
+        row.push_back(result);
+        grid.ZeroVolumeFractions();
+
+        // plane clipping
+        grid.ComputeVolumeFractionsPlane();
+        result = fabs(grid.ComputeTotalVolume() - exact) / exact;
         row.push_back(result);
         grid.ZeroVolumeFractions();
 
         // circle method
         grid.ComputeVolumeFractionsCurv();
-        result = 100.0*fabs(grid.ComputeTotalVolume() - exact) / exact;
+        result = fabs(grid.ComputeTotalVolume() - exact) / exact;
         row.push_back(result);
         grid.ZeroVolumeFractions();
 
         // AI method
         grid.ComputeVolumeFractionsAI();
-        result = 100.0*fabs(grid.ComputeTotalVolume() - exact) / exact;
+        result = fabs(grid.ComputeTotalVolume() - exact) / exact;
         row.push_back(result);
         grid.ZeroVolumeFractions();
         data.push_back(row);

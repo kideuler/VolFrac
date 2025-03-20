@@ -72,8 +72,6 @@ void Grid::AddShape(std::unique_ptr<IntervalTree<Axis::Y>> bdy){
         // cell centers
         vertex center1 = {box.x_min + (i1 + 0.5)*dx, box.y_min + (j1 + 0.5)*dy};
         vertex center2 = {box.x_min + (i2 + 0.5)*dx, box.y_min + (j2 + 0.5)*dy};
-        cells[c1].closest_point = SelectNearest(cells[c1], center1, P1);
-        cells[c2].closest_point = SelectNearest(cells[c2], center2, P2);
 
         // get all cells that the line between P1 and P2 crosses
         int x1 = i1, y1 = j1;
@@ -88,10 +86,6 @@ void Grid::AddShape(std::unique_ptr<IntervalTree<Axis::Y>> bdy){
         while (true) {
             int cell_index = x + y*(nx-1);
             cells[cell_index].loc_type = 1;
-            // cell center
-            vertex center = {box.x_min + (x + 0.5)*dx, box.y_min + (y + 0.5)*dy};
-            cells[cell_index].closest_point = SelectNearest(cells[cell_index], center, P1);
-            cells[cell_index].closest_point = SelectNearest(cells[cell_index], center, P2);
             if (x == x2 && y == y2)
                 break;
             int e2 = 2 * err;
@@ -117,27 +111,15 @@ void Grid::AddShape(std::unique_ptr<IntervalTree<Axis::Y>> bdy){
                 vertex cp = cells[cell_index].closest_point;
                 if (x > 0) {
                     visited[i-1] = true;
-                    int cell_index2 = x-1 + y*(nx-1);
-                    vertex center = {box.x_min + (x - 0.5)*dx, box.y_min + (y + 0.5)*dy};
-                    cells[cell_index2].closest_point = SelectNearest(cells[cell_index2], center, cp);
                 }
                 if (x < nx-1) {
                     visited[i+1] = true;
-                    int cell_index2 = x+1 + y*(nx-1);
-                    vertex center = {box.x_min + (x + 1.5)*dx, box.y_min + (y + 0.5)*dy};
-                    cells[cell_index2].closest_point = SelectNearest(cells[cell_index2], center, cp);
                 }
                 if (y > 0) {
                     visited[i-(nx-1)] = true;
-                    int cell_index2 = x + (y-1)*(nx-1);
-                    vertex center = {box.x_min + (x + 0.5)*dx, box.y_min + (y - 0.5)*dy};
-                    cells[cell_index2].closest_point = SelectNearest(cells[cell_index2], center, cp);
                 }
                 if (y < ny-1) {
                     visited[i+(nx-1)] = true;
-                    int cell_index2 = x + (y+1)*(nx-1);
-                    vertex center = {box.x_min + (x + 0.5)*dx, box.y_min + (y + 1.5)*dy};
-                    cells[cell_index2].closest_point = SelectNearest(cells[cell_index2], center, cp);
                 }
             }
         }
@@ -159,9 +141,11 @@ void Grid::ComputeVolumeFractions(){
         return;
     }
 
-    int count = 0;
+#ifdef USE_OPENMP
+    #pragma omp parallel for shared(cells, points, shapes, inflags) schedule(dynamic)
+#endif
     for (size_t i = 0; i < cells.size(); i++) {
-        count = 0;
+        int count = 0;
         for (int j = 0; j < 4; j++) {
             if (inflags[cells[i].indices[j]]) {
                 count++;
@@ -186,8 +170,12 @@ void Grid::ComputeVolumeFractions(int npaxis){
     // compute the volume fractions
     double dx_in = dx / (npaxis-1);
     double dy_in = dy / (npaxis-1);
-    for (size_t i = 0; i < cells.size(); i++) {
 
+#ifdef USE_OPENMP
+    #pragma omp parallel for shared(cells, points, shapes, inflags, dx_in, dy_in, npaxis) schedule(dynamic)
+#endif
+    for (size_t i = 0; i < cells.size(); i++) {
+        // This code runs in parallel across multiple threads
         if (!(cells[i].loc_type == 1)) {
             int count = 0;
             for (int j = 0; j < 4; j++) {
@@ -218,6 +206,9 @@ void Grid::ComputeVolumeFractionsCurv(){
         return;
     }
 
+#ifdef USE_OPENMP
+    #pragma omp parallel for shared(cells, points, shapes, inflags) schedule(dynamic)
+#endif
     for (size_t i = 0; i < cells.size(); i++) {
         if (!(cells[i].loc_type == 1)) {
             int count = 0;
@@ -261,11 +252,68 @@ void Grid::ComputeVolumeFractionsCurv(){
     }
 }
 
+void Grid::ComputeVolumeFractionsPlane(){
+    if (points.size() == 0 || cells.size() == 0 || kd_trees.size() == 0) {
+        return;
+    }
+
+#ifdef USE_OPENMP
+    #pragma omp parallel for shared(cells, points, shapes, inflags) schedule(dynamic)
+#endif
+    for (size_t i = 0; i < cells.size(); i++) {
+        if (!(cells[i].loc_type == 1)) {
+            int count = 0;
+            for (int j = 0; j < 4; j++) {
+                if (inflags[cells[i].indices[j]]) {
+                    count++;
+                }
+            }
+            cells[i].volfrac = double(count) / 4.0;
+            continue;
+        }
+
+        cell cell = cells[i];
+        double x_min = points[cell.indices[0]][0];
+        double x_max = points[cell.indices[1]][0];
+        double y_min = points[cell.indices[0]][1];
+        double y_max = points[cell.indices[2]][1];
+
+        vertex cell_center{(x_min + x_max) / 2, (y_min + y_max) / 2};
+        vertex P = cell.closest_point; 
+        vertex N;
+        double R = fabs(1.0/cell.closest_data[4]);
+        N[0] = cell.closest_data[1];
+        N[1] = -cell.closest_data[0];
+        if (cell.closest_data[4] < 0.0) {
+            N[0] = -N[0];
+            N[1] = -N[1];
+        }
+
+        double planes[1][3] = {
+            {N[0], N[1], -(N[0]*P[0] + N[1]*P[1])}
+        };
+
+        double area = PlaneBoxIntersection(x_min, x_max, y_min, y_max, planes, 1);
+
+        double volfrac = area/cells[i].volume;
+        if (volfrac > 1.0){
+            volfrac = 1.0;
+        }
+        if (cell.closest_data[4] < 0.0) {
+            volfrac = 1.0 - volfrac;
+        }
+        cells[i].volfrac = volfrac;
+    }
+}
+
 void Grid::ComputeVolumeFractionsAI(){
     if (points.size() == 0 || cells.size() == 0 || kd_trees.size() == 0) {
         return;
     }
 
+#ifdef USE_OPENMP
+    #pragma omp parallel for shared(cells, points, shapes, inflags) schedule(dynamic)
+#endif
     for (int i = 0; i < cells.size(); i++) {
         if (!(cells[i].loc_type == 1)) {
             int count = 0;
@@ -332,6 +380,9 @@ void Grid::PreComputeClosestPoints() {
         return;
     }
 
+#ifdef USE_OPENMP
+    #pragma omp parallel for shared(cells, points, shapes, inflags) schedule(dynamic)
+#endif
     for (size_t i = 0; i < cells.size(); i++) {
         if (!(cells[i].loc_type == 1)) {
             continue;
@@ -439,9 +490,14 @@ void Grid::ComputeVolumeFractionsTraining(const std::string &filename){
 
 double Grid::ComputeTotalVolume(){
     double total_volume = 0.0;
+
+#ifdef USE_OPENMP
+    #pragma omp parallel for reduction(+:total_volume) schedule(static)
+#endif
     for (size_t i = 0; i < cells.size(); i++) {
         total_volume += cells[i].volume * cells[i].volfrac;
     }
+    
     return total_volume;
 }
 
@@ -505,8 +561,6 @@ void Grid::ResetBox(BBox box, int nx, int ny){
             // cell centers
             vertex center1 = {box.x_min + (i1 + 0.5)*dx, box.y_min + (j1 + 0.5)*dy};
             vertex center2 = {box.x_min + (i2 + 0.5)*dx, box.y_min + (j2 + 0.5)*dy};
-            cells[c1].closest_point = SelectNearest(cells[c1], center1, P1);
-            cells[c2].closest_point = SelectNearest(cells[c2], center2, P2);
 
             // get all cells that the line between P1 and P2 crosses
             int x1 = i1, y1 = j1;
@@ -521,9 +575,6 @@ void Grid::ResetBox(BBox box, int nx, int ny){
             while (true) {
                 int cell_index = x + y*(nx-1);
                 cells[cell_index].loc_type = 1;
-                vertex center = {box.x_min + (x + 0.5)*dx, box.y_min + (y + 0.5)*dy};
-                cells[cell_index].closest_point = SelectNearest(cells[cell_index], center, P1);
-                cells[cell_index].closest_point = SelectNearest(cells[cell_index], center, P2);
 
                 if (x == x2 && y == y2)
                     break;
@@ -550,27 +601,15 @@ void Grid::ResetBox(BBox box, int nx, int ny){
                     vertex cp = cells[cell_index].closest_point;
                     if (x > 0) {
                         visited[i-1] = true;
-                        int cell_index2 = x-1 + y*(nx-1);
-                        vertex center = {box.x_min + (x - 0.5)*dx, box.y_min + (y + 0.5)*dy};
-                        cells[cell_index2].closest_point = SelectNearest(cells[cell_index2], center, cp);
                     }
                     if (x < nx-1) {
                         visited[i+1] = true;
-                        int cell_index2 = x+1 + y*(nx-1);
-                        vertex center = {box.x_min + (x + 1.5)*dx, box.y_min + (y + 0.5)*dy};
-                        cells[cell_index2].closest_point = SelectNearest(cells[cell_index2], center, cp);
                     }
                     if (y > 0) {
                         visited[i-(nx-1)] = true;
-                        int cell_index2 = x + (y-1)*(nx-1);
-                        vertex center = {box.x_min + (x + 0.5)*dx, box.y_min + (y - 0.5)*dy};
-                        cells[cell_index2].closest_point = SelectNearest(cells[cell_index2], center, cp);
                     }
                     if (y < ny-1) {
                         visited[i+(nx-1)] = true;
-                        int cell_index2 = x + (y+1)*(nx-1);
-                        vertex center = {box.x_min + (x + 0.5)*dx, box.y_min + (y + 1.5)*dy};
-                        cells[cell_index2].closest_point = SelectNearest(cells[cell_index2], center, cp);
                     }
                 }
             }
