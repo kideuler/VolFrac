@@ -2,17 +2,10 @@
 #include "LatexTable.hpp"
 #include "chrono"
 
-const double pi = 3.14159265358979323846;
 int column_width = 15;
 using namespace std;
 
 int main(int argc, char** argv){
-
-#ifdef USE_TORCH
-    TorchWrapper model("../../models/VolFrac.pt", "../../models/normalization.pt");
-#else
-    std::cout << "Torch not enabled" << std::endl;
-#endif
 
     int np = 100;
     if (argc > 1){
@@ -51,7 +44,7 @@ int main(int argc, char** argv){
         row.push_back(seconds);
         grid.ZeroVolumeFractions();
 
-        // pib 5
+        // pib 10
         start = std::chrono::high_resolution_clock::now();
         grid.ComputeVolumeFractions(10);
         end = std::chrono::high_resolution_clock::now();
@@ -60,7 +53,7 @@ int main(int argc, char** argv){
         row.push_back(seconds);
         grid.ZeroVolumeFractions();
 
-        // pib 10
+        // pib 20
         start = std::chrono::high_resolution_clock::now();
         grid.ComputeVolumeFractions(20);
         end = std::chrono::high_resolution_clock::now();
@@ -108,7 +101,7 @@ int main(int argc, char** argv){
     // np as string
     string np_str = to_string(np);
 
-    WriteLatexTable("Timing_table_"+np_str+".tex", headers, data,"Timing data for volume fraction methods on ellipse in seconds. The ellipse is discretized with "+np_str+" points.");
+    WriteLatexTable("Timing_table_"+np_str+".tex", headers, data,"Timing data for volume fraction initialization methods on ellipse in seconds. The ellipse is discretized with "+np_str+" points.");
 
     return 0;
 }

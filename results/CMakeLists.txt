@@ -7,13 +7,18 @@ target_link_libraries(Accuracy_line_test PRIVATE VolFrac)
 add_executable(Timing_test Timing_test.cpp)
 target_link_libraries(Timing_test PRIVATE VolFrac)
 
+add_executable(Ghost Accuracy_Ghost.cpp)
+target_link_libraries(Ghost PRIVATE VolFrac)
+
 configure_file(${CMAKE_SOURCE_DIR}/models/model.dat 
                ${CMAKE_CURRENT_BINARY_DIR}/model.dat 
                COPYONLY)
 
 # Add custom command to run results with an argument
 add_custom_target(results
-    COMMAND echo "Running Accuracy test on Ellipse"
+    COMMAND echo "Running Accuracy test on Ghost"
+    && ${CMAKE_CURRENT_BINARY_DIR}/Ghost
+    && echo "Running Accuracy test on Ellipse"
     && ${CMAKE_CURRENT_BINARY_DIR}/Accuracy_test 0 
     && echo "Running Accuracy test on Flower"
     && ${CMAKE_CURRENT_BINARY_DIR}/Accuracy_test 1 

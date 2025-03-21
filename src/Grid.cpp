@@ -227,19 +227,43 @@ void Grid::ComputeVolumeFractionsCurv(){
         double y_min = points[cell.indices[0]][1];
         double y_max = points[cell.indices[2]][1];
 
+        // if the cell has a discontinuity, calculate the two planes
+        if (cell.has_discontinuity) {
+            vertex P = {discontinuities[cell.dc_index][0], discontinuities[cell.dc_index][1]};
+            vertex N1 = {discontinuities[cell.dc_index][3], -discontinuities[cell.dc_index][2]};
+            vertex N2 = {discontinuities[cell.dc_index][5], discontinuities[cell.dc_index][4]};
+
+            double planes[2][3] = {
+                {N1[0], N1[1], -(N1[0]*P[0] + N1[1]*P[1])},
+                {N2[0], N2[1], -(N2[0]*P[0] + N2[1]*P[1])}
+            };
+
+            double area = PlaneBoxIntersection(x_min, x_max, y_min, y_max, planes, 2);
+
+            double volfrac = area/cells[i].volume;
+            continue;
+        }
+
         vertex cell_center{(x_min + x_max) / 2, (y_min + y_max) / 2};
         vertex P = cell.closest_point; 
         vertex N;
-        double R = fabs(1.0/cell.closest_data[4]);
+        bool use_plane = fabs(cell.closest_data[4]) < 1e-5;
+        double R = 1.0/fabs(cell.closest_data[4]);
         N[0] = -cell.closest_data[1];
         N[1] = cell.closest_data[0];
-        if (cell.closest_data[4] < 0.0) {
-            N[0] = -N[0];
-            N[1] = -N[1];
-        }
+        
         vertex C{(P[0]+R*N[0]), (P[1]+R*N[1])};
-
-        double area = ComputeCircleBoxIntersection(C, R, x_min, x_max, y_min, y_max);
+        
+        double area;
+        if (use_plane) {
+            double planes[1][3] = {
+                {N[0], N[1], -(N[0]*P[0] + N[1]*P[1])}
+            };
+    
+            area = PlaneBoxIntersection(x_min, x_max, y_min, y_max, planes, 1);
+        } else {
+            area = ComputeCircleBoxIntersection(C, R, x_min, x_max, y_min, y_max);
+        }
 
         double volfrac = area/cells[i].volume;
         if (volfrac > 1.0){
@@ -278,16 +302,29 @@ void Grid::ComputeVolumeFractionsPlane(){
         double y_min = points[cell.indices[0]][1];
         double y_max = points[cell.indices[2]][1];
 
+        // if the cell has a discontinuity, calculate the two planes
+        if (cells[i].has_discontinuity) {
+            vertex P = {discontinuities[cell.dc_index][0], discontinuities[cell.dc_index][1]};
+            vertex N1 = {discontinuities[cell.dc_index][3], -discontinuities[cell.dc_index][2]};
+            vertex N2 = {discontinuities[cell.dc_index][5], discontinuities[cell.dc_index][4]};
+
+            double planes[2][3] = {
+                {N1[0], N1[1], -(N1[0]*P[0] + N1[1]*P[1])},
+                {N2[0], N2[1], -(N2[0]*P[0] + N2[1]*P[1])}
+            };
+
+            double area = PlaneBoxIntersection(x_min, x_max, y_min, y_max, planes, 2);
+
+            double volfrac = area/cells[i].volume;
+            continue;
+        }
+
         vertex cell_center{(x_min + x_max) / 2, (y_min + y_max) / 2};
         vertex P = cell.closest_point; 
         vertex N;
         double R = fabs(1.0/cell.closest_data[4]);
         N[0] = cell.closest_data[1];
         N[1] = -cell.closest_data[0];
-        if (cell.closest_data[4] < 0.0) {
-            N[0] = -N[0];
-            N[1] = -N[1];
-        }
 
         double planes[1][3] = {
             {N[0], N[1], -(N[0]*P[0] + N[1]*P[1])}
@@ -332,6 +369,22 @@ void Grid::ComputeVolumeFractionsAI(){
         double y_min = points[cell.indices[0]][1];
         double y_max = points[cell.indices[2]][1];
 
+        if (cells[i].has_discontinuity) {
+            vertex P = {discontinuities[cell.dc_index][0], discontinuities[cell.dc_index][1]};
+            vertex N1 = {discontinuities[cell.dc_index][3], -discontinuities[cell.dc_index][2]};
+            vertex N2 = {discontinuities[cell.dc_index][5], discontinuities[cell.dc_index][4]};
+
+            double planes[2][3] = {
+                {N1[0], N1[1], -(N1[0]*P[0] + N1[1]*P[1])},
+                {N2[0], N2[1], -(N2[0]*P[0] + N2[1]*P[1])}
+            };
+
+            double area = PlaneBoxIntersection(x_min, x_max, y_min, y_max, planes, 2);
+
+            double volfrac = area/cells[i].volume;
+            continue;
+        }
+
         double dx = x_max - x_min;
         double dy = y_max - y_min;
 
@@ -345,6 +398,7 @@ void Grid::ComputeVolumeFractionsAI(){
         double dxx_dt = data[2]/dx;
         double dyy_dt = data[3]/dy;
         double K = (dx_dt*dyy_dt - dy_dt*dxx_dt) / pow(dx_dt*dx_dt + dy_dt*dy_dt, 1.5);
+        K = (fabs(K) < 1e-5 ? 1e-5 : K);
         double norm = sqrt(dx_dt*dx_dt + dy_dt*dy_dt);
         dx_dt /= norm;
         dy_dt /= norm;
@@ -352,14 +406,21 @@ void Grid::ComputeVolumeFractionsAI(){
         vertex N{-dy_dt, dx_dt};
         double R = fabs(1.0/K);
 
-        if (K < 0.0) {
-            N[0] = -N[0];
-            N[1] = -N[1];
-        }
         vertex C{(P[0]+R*N[0]), (P[1]+R*N[1])};
 
         double input[5] = {P[0], P[1], N[0], N[1], fabs(K)};
-        double volfrac = model->Predict(input);
+        bool use_plane = fabs(K) < 1e-5;
+        double volfrac;
+        if (use_plane) {
+            double planes[1][3] = {
+                {N[0], N[1], -(N[0]*P[0] + N[1]*P[1])}
+            };
+    
+            volfrac = PlaneBoxIntersection(x_min, x_max, y_min, y_max, planes, 1);
+        } else {
+            volfrac = model->Predict(input);
+        }
+        
         //volfrac = ComputeCircleBoxIntersection(C, R, 0.0, 1.0, 0.0, 1.0);
         if (volfrac > 1.0){
             volfrac = 1.0;
@@ -461,10 +522,6 @@ void Grid::ComputeVolumeFractionsTraining(const std::string &filename){
         vertex N{-dy_dt, dx_dt};
         double R = fabs(1.0/K);
 
-        if (K < 0.0) {
-            N[0] = -N[0];
-            N[1] = -N[1];
-        }
         vertex C{(P[0]+R*N[0]), (P[1]+R*N[1])};
 
         double volfrac = ComputeCircleBoxIntersection(C, R, 0.0, 1.0, 0.0, 1.0);
@@ -619,6 +676,20 @@ void Grid::ResetBox(BBox box, int nx, int ny){
                     cells[i].loc_type = 1;
                 }
             }
+        }
+    }
+
+    if (discontinuities.size() > 0){
+        for (int n = 0; n<discontinuities.size(); ++n) {
+            // for the point, find the cell they are in
+            double x = discontinuities[n][0];
+            double y = discontinuities[n][1];
+            int i = std::floor((x - box.x_min) / dx);
+            int j = std::floor((y - box.y_min) / dy);
+            int c = i + j*(nx-1);
+            cells[c].loc_type = 1;
+            cells[c].has_discontinuity = true;
+            cells[c].dc_index = n;
         }
     }
 }

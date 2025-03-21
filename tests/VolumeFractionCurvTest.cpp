@@ -128,6 +128,14 @@ TEST(VolumeFractionCurveTest, ComputeVolumeFractionsFlower){
         double dxx = -(0.1*sin(5*t) + 0.25)*cos(t)/3 - 0.333333333333333*sin(t)*cos(5*t) - 0.833333333333333*sin(5*t)*cos(t);
         double dyy = -(0.1*sin(5*t) + 0.25)*sin(t)/3 - 0.833333333333333*sin(t)*sin(5*t) + 0.333333333333333*cos(t)*cos(5*t);
         double k = (dx*dyy - dy*dxx) / pow(dx*dx + dy*dy, 1.5);
+
+        if (k < 0.0) {
+            dx = -dx;
+            dy = -dy;
+            dxx = -dxx;
+            dyy = -dyy;
+        }
+        
         double arr[5] = {dx, dy, dxx, dyy, k};
 
         tree.Insert(P, arr);

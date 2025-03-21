@@ -32,6 +32,8 @@ struct cell {
     int8_t loc_type = 0;
     double closest_data[5] {0.0, 0.0, 0.0, 0.0, 0.0};
     array<double,2> closest_point = {0.0, 0.0};
+    bool has_discontinuity = false;
+    int dc_index = -1;
 };
 
 class Grid {
@@ -83,6 +85,7 @@ class Grid {
     public:
         vector<vertex> points;
         vector<cell> cells;
+        std::vector<std::array<double,6>> discontinuities;
 
         Model *model = nullptr;
 };

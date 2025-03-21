@@ -1,7 +1,6 @@
 #include "TestFramework.hpp"
 #include "LatexTable.hpp"
 
-const double pi = 3.14159265358979323846;
 int column_width = 15;
 using namespace std;
 
