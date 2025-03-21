@@ -25,7 +25,7 @@ int main(int argc, char** argv) {
         sizes_str.push_back(to_string(size));
     }
 
-    vector<string> headers = {"Sizes","Cross","PIB 10", "PIB 20", "Plane Clipping", "OscCircle", "AI"};
+    vector<string> headers = {"Sizes","PIB 10", "PIB 20", "Plane Clipping", "OscCircle", "AI"};
 
     for (const auto& header : headers) {
         cout << setw(column_width) << header << " ";
@@ -40,10 +40,10 @@ int main(int argc, char** argv) {
         row.push_back(sizes[i]);
 
         // cross
-        grid.ComputeVolumeFractions();
-        result = fabs(grid.ComputeTotalVolume() - exact) / exact;
-        row.push_back(result);
-        grid.ZeroVolumeFractions();
+        // grid.ComputeVolumeFractions();
+        // result = fabs(grid.ComputeTotalVolume() - exact) / exact;
+        // row.push_back(result);
+        // grid.ZeroVolumeFractions();
 
         // pib 3
         grid.ComputeVolumeFractions(10);
@@ -84,11 +84,8 @@ int main(int argc, char** argv) {
     }
 
     std::string filename = "AccuracyTable_"+shape_names[shape]+".tex";
-    if (headers[headers.size()-1] == "AI"){
-        filename = "AccuracyTable_"+shape_names[shape]+"_AI.tex";
-    }
 
-    WriteLatexTable(filename, headers, data, "Accuracy of Volume Fraction Methods on "+shape_names[shape]+" in terms of percent error of total volume");
+    WriteLatexTable(filename, headers, data, "Accuracy of Volume Fraction Methods on "+shape_names[shape]+" in terms of percent error of total volume.\\label{tab:accuracy_"+shape_names[shape]+"}");
     
 
 

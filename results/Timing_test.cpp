@@ -17,7 +17,7 @@ int main(int argc, char** argv){
     grid.addModel("model.dat");
 
     vector<int> sizes = {32,64,128,256,512,1024,2048,4096};
-    vector<string> headers = {"Sizes","Cross","PIB 10", "PIB 20", "Plane Clipping", "OscCircle","AI"};
+    vector<string> headers = {"Sizes","PIB 10", "PIB 20", "Plane Clipping", "OscCircle","AI"};
     for (const auto& header : headers) {
         cout << setw(column_width) << header << " ";
     }
@@ -35,14 +35,13 @@ int main(int argc, char** argv){
         row.push_back(sizes[i]);
         grid.PreComputeClosestPoints();
 
-        // pib 3
-        start = std::chrono::high_resolution_clock::now();
-        grid.ComputeVolumeFractions(3);
-        end = std::chrono::high_resolution_clock::now();
-        duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-        seconds = duration.count() / 1000000.0;
-        row.push_back(seconds);
-        grid.ZeroVolumeFractions();
+        // start = std::chrono::high_resolution_clock::now();
+        // grid.ComputeVolumeFractions();
+        // end = std::chrono::high_resolution_clock::now();
+        // duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+        // seconds = duration.count() / 1000000.0;
+        // row.push_back(seconds);
+        // grid.ZeroVolumeFractions();
 
         // pib 10
         start = std::chrono::high_resolution_clock::now();
