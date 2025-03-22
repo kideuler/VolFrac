@@ -14,7 +14,7 @@ int main(int argc, char** argv) {
     vector<string> shape_names = {"Ellipse", "Flower", "Petals"};
 
     BBox box{0.3, 0.7, 0.3, 0.7};
-    Grid grid = CreateGrid(box, 5, 5, shape, 100000);
+    Grid grid = CreateGrid(box, 5, 5, shape, 200000);
     double exact = exacts[shape];
 
     grid.addModel("model.dat");

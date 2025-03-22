@@ -7,7 +7,7 @@ using namespace std;
 int main() {
 
     BBox box{-0.7, 1.1, -0.4, 1.8};
-    Grid grid = CreateGrid(box, 5, 5, 3, 70000);
+    Grid grid = CreateGrid(box, 5, 5, 3, 100000);
     grid.addModel("model.dat");
 
     vector<int> sizes = {32,64,128,256,512,1024,2048,4096};
