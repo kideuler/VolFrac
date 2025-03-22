@@ -172,7 +172,7 @@ void Model::PrintModel() {
     }
 }
 
-double Model::Predict(double input[5]) {
+double Model::Predict(double input[]) {
     // Normalize input
     int isz = input_size;
     Vector input_vec(isz);
@@ -181,7 +181,8 @@ double Model::Predict(double input[5]) {
     }
 
     // fifth input is log10
-    input_vec[4] = std::log10(input_vec[4])+1e-10;
+    if (isz == 5) {input_vec[4] = std::log10(input_vec[4])+1e-10;}
+    
     for (int i = 0; i < isz; ++i) {
         input_vec(i) = (input_vec(i) - input_mean(i)) / input_std(i);
     }

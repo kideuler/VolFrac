@@ -8,55 +8,67 @@ import matplotlib.pyplot as plt
 import getopt, sys
 import os
 
-def find_lr(model, criterion, optimizer, dataloader, start_lr=1e-7, end_lr=1, num_iter=100):
-    # Save original model parameters
-    original_params = [p.clone().detach() for p in model.parameters()]
-    
-    lrs = []
-    losses = []
-    best_loss = float('inf')
-    
-    # Update learning rate logarithmically
-    mult = (end_lr/start_lr)**(1/num_iter)
-    lr = start_lr
-    optimizer.param_groups[0]['lr'] = lr
-    
-    model.train()
-    for i, (x_batch, y_batch) in enumerate(dataloader):
-        if i >= num_iter:
-            break
+import datetime
+
+class DualScheduler:
+    def __init__(self, optimizer, min_lr=1e-6, max_lr=0.1, patience=20, factor=0.5, 
+                 shock_threshold=50, shock_factor=2.0, max_shock_lr=0.1):
+        self.optimizer = optimizer
+        self.min_lr = min_lr
+        self.max_lr = max_lr
+        self.patience = patience
+        self.factor = factor
+        self.shock_threshold = shock_threshold  # How many epochs of no improvement before shock
+        self.shock_factor = shock_factor  # How much to increase LR during shock
+        self.max_shock_lr = max_shock_lr  # Maximum LR during shock
         
-        optimizer.zero_grad()
-        output = model(x_batch)
-        loss = criterion(output, y_batch)
+        self.best_loss = float('inf')
+        self.stagnation_counter = 0
+        self.plateau_counter = 0
+        self.mode = 'refine'  # Start in refinement mode
         
-        # Store values
-        lrs.append(lr)
-        if loss < best_loss:
-            best_loss = loss.item()
+    def step(self, val_loss):
+        current_lr = self.optimizer.param_groups[0]['lr']
         
-        # Stop if loss explodes
-        if loss > 4 * best_loss or torch.isnan(loss):
-            break
+        # Check if we improved
+        if val_loss < self.best_loss:
+            self.best_loss = val_loss
+            self.stagnation_counter = 0
+            self.plateau_counter = 0
+            return current_lr  # No change needed
+        else:
+            self.stagnation_counter += 1
             
-        losses.append(loss.item())
+            # In refinement mode, we reduce learning rate after patience steps
+            if self.mode == 'refine':
+                self.plateau_counter += 1
+                
+                # If we've been on a plateau for 'patience' steps, reduce LR
+                if self.plateau_counter >= self.patience:
+                    new_lr = max(current_lr * self.factor, self.min_lr)
+                    if new_lr != current_lr:
+                        print(f"Reducing LR from {current_lr:.6f} to {new_lr:.6f}")
+                        for param_group in self.optimizer.param_groups:
+                            param_group['lr'] = new_lr
+                        self.plateau_counter = 0
+                        
+                # If we've been stagnant for shock_threshold steps, switch to shock mode
+                if self.stagnation_counter >= self.shock_threshold:
+                    self.mode = 'shock'
+                    new_lr = min(current_lr * self.shock_factor, self.max_shock_lr)
+                    print(f"Shocking system! Increasing LR from {current_lr:.6f} to {new_lr:.6f}")
+                    for param_group in self.optimizer.param_groups:
+                        param_group['lr'] = new_lr
+                    self.plateau_counter = 0
+            
+            # In shock mode, we switch back to refinement after one step
+            elif self.mode == 'shock':
+                self.mode = 'refine'
+                self.plateau_counter = 0
+                self.stagnation_counter = 0
+                self.shock_threshold *= 2  # Double the shock threshold
         
-        loss.backward()
-        optimizer.step()
-        
-        # Update learning rate
-        lr *= mult
-        optimizer.param_groups[0]['lr'] = lr
-    
-    # Restore original parameters
-    for p, p_orig in zip(model.parameters(), original_params):
-        p.data.copy_(p_orig.data)
-    
-    # Find best learning rate (usually order of magnitude less than minimum)
-    min_idx = np.argmin(losses)
-    best_lr = lrs[min_idx] / 10
-    print(f"Suggested learning rate: {best_lr:.8f}")
-    return best_lr
+        return self.optimizer.param_groups[0]['lr']
 
 class MAPELoss(nn.Module):
     """
@@ -93,6 +105,52 @@ class VolFracDataSet(Dataset):
         xy[:, 4] = np.log10(xy[:, 4] + 1e-10) # Log transform the curvature
         self.x = torch.from_numpy(xy[:, [0,1,2,3,4]].astype(np.float32))
         self.y = torch.from_numpy(xy[:, 5].astype(np.float32)).view(-1, 1)
+        print(self.x.min())
+        print(self.x.max())
+
+        # Split into train/val/test
+        x_temp, self.x_test, y_temp, self.y_test = train_test_split(self.x, self.y, test_size=0.2)
+        self.x_train, self.x_val, self.y_train, self.y_val = train_test_split(x_temp, y_temp, test_size=0.2)
+        
+        # Normalize inputs
+        self.x_mean = self.x.mean(dim=0)
+        self.x_std = self.x.std(dim=0)
+        self.x_train = (self.x_train - self.x_mean) / self.x_std
+        self.x_val = (self.x_val - self.x_mean) / self.x_std
+        self.x_test = (self.x_test - self.x_mean) / self.x_std
+        
+        # Normalize targets
+        self.y_mean = self.y.mean()
+        self.y_std = self.y.std()
+        self.y_train = (self.y_train - self.y_mean) / self.y_std
+        self.y_val = (self.y_val - self.y_mean) / self.y_std
+        self.y_test = (self.y_test - self.y_mean) / self.y_std
+        
+        self.n_samples = self.x_train.shape[0]
+
+        # print the mean and std of the training data
+        
+        print(self.x_mean)
+        print(self.x_std)
+        print(self.y.min())
+        print(self.y.max())
+        print(self.y_mean)
+        print(self.y_std)
+
+    def __len__(self):
+        return self.n_samples
+    
+    def __getitem__(self, index):
+        return self.x_train[index], self.y_train[index]
+    
+    def get_test_data(self):
+        return self.x_test, self.y_test
+    
+class VolFracDataSet_Plane(Dataset):
+    def __init__(self, filename):
+        xy = np.loadtxt(filename, delimiter=',', dtype=np.float32)
+        self.x = torch.from_numpy(xy[:, [0,1,2,3]].astype(np.float32))
+        self.y = torch.from_numpy(xy[:, 4].astype(np.float32)).view(-1, 1)
         print(self.x.min())
         print(self.x.max())
 
@@ -226,3 +284,4 @@ def Write_model(filename,norm_module,dataset,model):
                 f.write(f"\n")
             else:
                 f.write(f"# Skipping parameter with unusual shape: {param.shape}\n")
+

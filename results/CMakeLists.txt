@@ -14,6 +14,10 @@ configure_file(${CMAKE_SOURCE_DIR}/models/model.dat
                ${CMAKE_CURRENT_BINARY_DIR}/model.dat 
                COPYONLY)
 
+configure_file(${CMAKE_SOURCE_DIR}/models/model_planes.dat 
+               ${CMAKE_CURRENT_BINARY_DIR}/model_planes.dat 
+               COPYONLY)
+
 # Add custom command to run results with an argument
 add_custom_target(results
     COMMAND echo "Running Accuracy test on Ghost"
@@ -35,4 +39,11 @@ add_custom_target(results
     DEPENDS Accuracy_test Accuracy_line_test Timing_test
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     COMMENT "Running tests to generate results"
+)
+
+# Add custom target to make plots
+add_custom_target(plots
+    COMMAND python ${CMAKE_SOURCE_DIR}/Plot_Accuracy_Results.py
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    COMMENT "Generating plots"
 )

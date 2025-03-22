@@ -37,7 +37,7 @@ def create_loglog_plot(headers, data, output_file=None):
     sizes_squared = sizes  # N^2
     
     markers = ['o', 's', '^', 'D', '*', 'x', '+', 'v']
-    colors = plt.cm.tab10(np.linspace(0, 1, len(headers)-1))
+    colors = plt.cm.Dark2(np.linspace(0, 1, len(headers)-1))
     
     for i, method in enumerate(headers[1:]):
         errors = np.array([float(row[i+1]) for row in data])
@@ -51,11 +51,11 @@ def create_loglog_plot(headers, data, output_file=None):
     # First-order convergence (N^-1)
     x_ref = np.array([sizes_squared[0], sizes_squared[-1]])
     y_ref = max_error * (x_ref[0] / x_ref) 
-    plt.loglog(x_ref, y_ref, 'k--', alpha=0.5, label='O(N$^{-1}$)')
+    plt.loglog(x_ref, y_ref, 'k--', alpha=1.0, label='O(N$^{-1}$)')
     
     # Second-order convergence (N^-2)
     y_ref2 = max_error * (x_ref[0] / x_ref)**2
-    plt.loglog(x_ref, y_ref2, 'k:', alpha=0.5, label='O(N$^{-2}$)')
+    plt.loglog(x_ref, y_ref2, 'k:', alpha=1.0, label='O(N$^{-2}$)')
     
     plt.grid(True, which="both", ls="--", alpha=0.5)
     plt.xlabel('$\sqrt{N}$', fontsize=18)
@@ -71,7 +71,9 @@ def create_loglog_plot(headers, data, output_file=None):
     if output_file:
         plt.savefig(output_file, dpi=300, bbox_inches='tight')
     
-    plt.show()
+    plt.draw()
+    # Make sure it gets displayed by flushing events
+    plt.pause(0.5)
 
 def main(tex_file):
     if not os.path.exists(tex_file):
@@ -85,7 +87,7 @@ def main(tex_file):
         return
     
     # Create the log-log plot
-    output_file = os.path.join('build', 'results', 'Ellipse_Convergence_Plot.png')
+    output_file = tex_file.replace('.tex', '.png')
     create_loglog_plot(headers, data, output_file)
     print(f"Plot saved to {output_file}")
     
@@ -111,3 +113,4 @@ if __name__ == "__main__":
     main(os.path.join('build', 'results', 'AccuracyTable_Ellipse.tex'))
     main(os.path.join('build', 'results', 'AccuracyTable_Flower.tex'))
     main(os.path.join('build', 'results', 'AccuracyTable_Petals.tex'))
+    main(os.path.join('build', 'results', 'AccuracyTable_Ghost.tex'))

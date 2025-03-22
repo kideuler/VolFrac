@@ -231,7 +231,7 @@ void Grid::ComputeVolumeFractionsCurv(){
         if (cell.has_discontinuity) {
             vertex P = {discontinuities[cell.dc_index][0], discontinuities[cell.dc_index][1]};
             vertex N1 = {discontinuities[cell.dc_index][3], -discontinuities[cell.dc_index][2]};
-            vertex N2 = {discontinuities[cell.dc_index][5], discontinuities[cell.dc_index][4]};
+            vertex N2 = {discontinuities[cell.dc_index][5], -discontinuities[cell.dc_index][4]};
 
             double planes[2][3] = {
                 {N1[0], N1[1], -(N1[0]*P[0] + N1[1]*P[1])},
@@ -306,7 +306,7 @@ void Grid::ComputeVolumeFractionsPlane(){
         if (cells[i].has_discontinuity) {
             vertex P = {discontinuities[cell.dc_index][0], discontinuities[cell.dc_index][1]};
             vertex N1 = {discontinuities[cell.dc_index][3], -discontinuities[cell.dc_index][2]};
-            vertex N2 = {discontinuities[cell.dc_index][5], discontinuities[cell.dc_index][4]};
+            vertex N2 = {discontinuities[cell.dc_index][5], -discontinuities[cell.dc_index][4]};
 
             double planes[2][3] = {
                 {N1[0], N1[1], -(N1[0]*P[0] + N1[1]*P[1])},
@@ -372,7 +372,7 @@ void Grid::ComputeVolumeFractionsAI(){
         if (cells[i].has_discontinuity) {
             vertex P = {discontinuities[cell.dc_index][0], discontinuities[cell.dc_index][1]};
             vertex N1 = {discontinuities[cell.dc_index][3], -discontinuities[cell.dc_index][2]};
-            vertex N2 = {discontinuities[cell.dc_index][5], discontinuities[cell.dc_index][4]};
+            vertex N2 = {discontinuities[cell.dc_index][5], -discontinuities[cell.dc_index][4]};
 
             double planes[2][3] = {
                 {N1[0], N1[1], -(N1[0]*P[0] + N1[1]*P[1])},
@@ -398,7 +398,7 @@ void Grid::ComputeVolumeFractionsAI(){
         double dxx_dt = data[2]/dx;
         double dyy_dt = data[3]/dy;
         double K = (dx_dt*dyy_dt - dy_dt*dxx_dt) / pow(dx_dt*dx_dt + dy_dt*dy_dt, 1.5);
-        K = (fabs(K) < 1e-5 ? 1e-5 : K);
+        K = (fabs(K) < 1e-3 ? 1e-3 : K);
         double norm = sqrt(dx_dt*dx_dt + dy_dt*dy_dt);
         dx_dt /= norm;
         dy_dt /= norm;
@@ -409,14 +409,14 @@ void Grid::ComputeVolumeFractionsAI(){
         vertex C{(P[0]+R*N[0]), (P[1]+R*N[1])};
 
         double input[5] = {P[0], P[1], N[0], N[1], fabs(K)};
-        bool use_plane = fabs(K) < 1e-5;
+        bool use_plane = fabs(K) < 1e-3;
         double volfrac;
-        if (use_plane) {
+        if (false) {
             double planes[1][3] = {
                 {N[0], N[1], -(N[0]*P[0] + N[1]*P[1])}
             };
     
-            volfrac = PlaneBoxIntersection(x_min, x_max, y_min, y_max, planes, 1);
+            volfrac = 1.0-PlaneBoxIntersection(0.0, 1.0, 0.0, 1.0, planes, 1);
         } else {
             volfrac = model->Predict(input);
         }

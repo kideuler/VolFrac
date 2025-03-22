@@ -10,6 +10,7 @@ import os
 from torch.optim import Adam, AdamW, RMSprop, Adagrad
 from torch.optim.lr_scheduler import CyclicLR
 from torch.optim.lr_scheduler import OneCycleLR, CosineAnnealingWarmRestarts
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 
 from Model import *
 
@@ -22,14 +23,14 @@ long_options = ["help","data-path=", "save-path=","model-path=","num-epochs=","p
 
 # checking each argument
 plot = False
-path = 'build/data/VolFracData.dat'
+path = 'build/data/VolFracData_Curve.dat'
 save_path = 'models/'
 load_model = False
 model_path = 'models/best_model.pth'
 save_frequency = 0
-num_epochs = 1000
+num_epochs = 5000
 optimizer_name = "adamW"  # Options: "adam", "adamw", "rmsprop", "adagrad", "onecycle"
-base_lr = 0.001
+base_lr = 0.01
 
 
 try:
@@ -62,11 +63,11 @@ except getopt.error as err:
     print (str(err))
 
 dataset = VolFracDataSet(path)
-dataloader = DataLoader(dataset, batch_size=128, shuffle=True)
+dataloader = DataLoader(dataset, batch_size=512, shuffle=True)
 n_samples, n_features = dataset.x_train.shape
 
 
-model = NeuralNet(input_size=n_features, hidden_sizes=[32,64,128,256,64,32], num_classes=1)
+model = NeuralNet(input_size=n_features, hidden_sizes=[64,128,64], num_classes=1)
 
 norm_module = NormalizationModule(
     dataset.x_mean,
@@ -77,7 +78,7 @@ norm_module = NormalizationModule(
 
 # Training loop with early stopping
 best_val_loss = float('inf')
-patience = 100
+patience = 500
 patience_counter = 0
 grad_clip = 1.0
 
@@ -90,35 +91,21 @@ elif optimizer_name == "rmsprop":
     optimizer = RMSprop(model.parameters(), lr=base_lr, weight_decay=1e-3, momentum=0.99)
 elif optimizer_name == "adagrad":
     optimizer = Adagrad(model.parameters(), lr=base_lr, weight_decay=1e-5)
-elif optimizer_name == "onecycle":
-    optimizer = AdamW(model.parameters(), lr=base_lr, weight_decay=0.01)
-    # OneCycleLR provides a learning rate that first increases then decreases
-    scheduler = OneCycleLR(
-        optimizer,
-        max_lr=base_lr,
-        epochs=num_epochs,
-        steps_per_epoch=len(dataloader),
-        pct_start=0.3,  # Spend 30% of time warming up
-        div_factor=25,  # Initial LR will be max_lr/25
-        final_div_factor=1000  # Final LR will be max_lr/1000
-    )
 else:
     # Default to AdamW
     optimizer = AdamW(model.parameters(), lr=base_lr, weight_decay=0.01)
-
-# Set up main scheduler - either we're using OneCycle (already configured above) 
-# or we're using ReduceLROnPlateau for other optimizers
-if optimizer_name != "onecycle":
-    
-    scheduler = OneCycleLR(
-        optimizer,
-        max_lr=base_lr,
-        epochs=num_epochs,
-        steps_per_epoch=len(dataloader),
-        pct_start=0.3,
-        div_factor=10,
-        final_div_factor=100
-    )
+ 
+# using ReduceLROnPlateau for optimizers
+scheduler = DualScheduler(
+    optimizer,
+    min_lr=1e-6,
+    max_lr=0.1,
+    patience=20,        # Regular plateau patience
+    factor=0.5,         # How much to reduce LR on plateau
+    shock_threshold=50, # How many epochs without improvement before shocking
+    shock_factor=100.0,   # How much to increase LR during shock
+    max_shock_lr=0.05   # Maximum allowed shock LR
+)
 
 
 criterion = MAPELoss()
@@ -158,6 +145,7 @@ if plot:
     plt.show(block=False)
 
 # Training loop
+start_time = datetime.datetime.now()
 for epoch in range(num_epochs):
 
     model.train()
@@ -171,9 +159,6 @@ for epoch in range(num_epochs):
         loss.backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), grad_clip)
         optimizer.step()
-
-        if optimizer_name != "onecycle":
-            scheduler.step(epoch)
 
         running_train_loss += loss.item()
         num_batches += 1
@@ -205,7 +190,7 @@ for epoch in range(num_epochs):
             print("Early stopping triggered")
             break
             
-        print(f'Epoch: {epoch+1}, Train Loss: {loss:.16f}, Val Loss: {val_loss:.16f}')
+        print(f'Epoch: {epoch+1}, Train Loss: {loss:.16f}, Val Loss: {val_loss:.16f}, Learning rate: {optimizer.param_groups[0]["lr"]:.16f}')
         
         # Update plots every 10 epochs or on the last epoch
         if plot and (epoch % 10 == 0 or epoch == num_epochs - 1 or patience_counter >= patience):
@@ -247,5 +232,8 @@ for epoch in range(num_epochs):
 if plot:
     plt.savefig(f"{save_path}/final_loss_plot.png")
 
-print("Training completed!")
+training_time = (datetime.datetime.now() - start_time).total_seconds()
     
+print("Training completed!")
+
+# End of Script

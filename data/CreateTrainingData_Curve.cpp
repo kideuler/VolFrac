@@ -14,7 +14,7 @@ int main(int argc, char** argv) {
 
     // create file to store the data
     std::fstream fid;
-    fid.open("VolFracData.dat", std::ios::out);
+    fid.open("VolFracData_Curve.dat", std::ios::out);
 
     int ncirc = 10000;
 

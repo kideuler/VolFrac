@@ -35,6 +35,10 @@ configure_file(${CMAKE_SOURCE_DIR}/models/model.dat
                ${CMAKE_CURRENT_BINARY_DIR}/model.dat 
                COPYONLY)
 
+configure_file(${CMAKE_SOURCE_DIR}/models/model_planes.dat 
+               ${CMAKE_CURRENT_BINARY_DIR}/model_planes.dat 
+               COPYONLY)
+
 add_executable(ModelTest ModelTest.cpp)
 target_link_libraries(ModelTest GTest::GTest GTest::Main VolFrac)
 gtest_discover_tests(ModelTest)

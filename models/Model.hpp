@@ -43,7 +43,7 @@ class Model {
             }
         }
 
-        double Predict(double input[5]);
+        double Predict(double input[]);
 
         const std::unordered_map<std::string, Model::ActivationFunction> activationMap = {
             {"ReLU", ReLU},

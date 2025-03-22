@@ -17,7 +17,7 @@ int main() {
         sizes_str.push_back(to_string(size));
     }
 
-    vector<string> headers = {"Sizes","PIB 10", "PIB 50", "Plane Clipping", "OscCircle", "AI"};
+    vector<string> headers = {"Sizes","PIB 10", "PIB 20", "Plane Clipping", "OscCircle", "AI"};
     for (const auto& header : headers) {
         cout << setw(column_width) << header << " ";
     }
@@ -45,7 +45,7 @@ int main() {
         grid.ZeroVolumeFractions();
 
         // pib 10
-        grid.ComputeVolumeFractions(50);
+        grid.ComputeVolumeFractions(20);
         result = fabs(grid.ComputeTotalVolume() - exact) / exact;
         row.push_back(result);
         grid.ZeroVolumeFractions();
