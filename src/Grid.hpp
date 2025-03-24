@@ -88,6 +88,10 @@ class Grid {
         std::vector<std::array<double,6>> discontinuities;
 
         Model *model = nullptr;
+
+        static bool forceSerialExecution;
 };
+
+inline bool Grid::forceSerialExecution = false;
 
 #endif

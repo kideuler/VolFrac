@@ -17,8 +17,8 @@ The following instructions mirror the steps defined in the workflow:
 1. **Clone the Repository**
 
    ```bash
-   git clone https://github.com/your-username/VolFracAI.git
-   cd VolFracAI
+   git clone https://github.com/your-username/VolFrac.git
+   cd VolFrac
    ```
 
 2. **Set up Python Environment**
@@ -37,7 +37,7 @@ The following instructions mirror the steps defined in the workflow:
     git clone https://github.com/google/googletest.git -b release-1.12.1
     cd googletest
     mkdir build && cd build
-    cmake -DCMAKE_INSTALL_PREFIX=/location/to/install -DCMAKE_CXX_FLAGS="$CMAKE_CXX_FLAGS -D_GLIBCXX_USE_CXX11_ABI=0" ..
+    cmake -DCMAKE_INSTALL_PREFIX=/location/to/install -DCMAKE_BUILD_TYPE=Release ..
     make
     sudo make install
     cd ../..
@@ -47,7 +47,7 @@ The following instructions mirror the steps defined in the workflow:
 4. **Activate Environment and Configure CMake**
     ```
     source venv/bin/activate
-    cmake -B build -DCMAKE_BUILD_TYPE=Release -DARG=20000 -DCMAKE_PREFIX_PATH=${VIRTUAL_ENV}/lib/python3.8/site-packages/torch/share/cmake/Torch -DCMAKE_CXX_FLAGS="$CMAKE_CXX_FLAGS -D_GLIBCXX_USE_CXX11_ABI=0"
+    cmake -B build -DCMAKE_BUILD_TYPE=Release
     ```
 
 5. **Build and Run Tests**
@@ -60,7 +60,7 @@ The following instructions mirror the steps defined in the workflow:
 
 6. **Train Model**
     ```
-    python py/Train.py
+    python py/Train_Curvature.py
     ```
 
 7. **Test Model**

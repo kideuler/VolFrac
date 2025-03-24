@@ -28,7 +28,7 @@ save_path = 'models/'
 load_model = False
 model_path = 'models/best_model.pth'
 save_frequency = 0
-num_epochs = 5000
+num_epochs = 2000
 optimizer_name = "adamW"  # Options: "adam", "adamw", "rmsprop", "adagrad", "onecycle"
 base_lr = 0.01
 

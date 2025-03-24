@@ -25,21 +25,6 @@ Grid::Grid(BBox box, int nx, int ny){
     }
 }
 
-static inline vertex SelectNearest(cell &c, vertex center, vertex P){
-    double dx1 = center[0] - P[0];
-    double dy1 = center[1] - P[1];
-    double d1 = sqrt(dx1 * dx1 + dy1 * dy1);
-
-    double dx2 = center[0] - c.closest_point[0];
-    double dy2 = center[1] - c.closest_point[1];
-    double d2 = sqrt(dx2 * dx2 + dy2 * dy2);
-    if (d1 < d2){
-        return P;
-    } else {
-        return c.closest_point;
-    }
-}
-
 void Grid::AddShape(std::unique_ptr<IntervalTree<Axis::Y>> bdy){
     shapes.push_back(std::move(bdy));
 
@@ -68,10 +53,6 @@ void Grid::AddShape(std::unique_ptr<IntervalTree<Axis::Y>> bdy){
 
         cells[c1].loc_type = 1;
         cells[c2].loc_type = 1;
-
-        // cell centers
-        vertex center1 = {box.x_min + (i1 + 0.5)*dx, box.y_min + (j1 + 0.5)*dy};
-        vertex center2 = {box.x_min + (i2 + 0.5)*dx, box.y_min + (j2 + 0.5)*dy};
 
         // get all cells that the line between P1 and P2 crosses
         int x1 = i1, y1 = j1;
@@ -107,8 +88,6 @@ void Grid::AddShape(std::unique_ptr<IntervalTree<Axis::Y>> bdy){
             if (cells[i].loc_type == 1) {
                 int x = i % (nx-1);
                 int y = i / (nx-1);
-                int cell_index = x + y*(nx-1);
-                vertex cp = cells[cell_index].closest_point;
                 if (x > 0) {
                     visited[i-1] = true;
                 }
@@ -142,7 +121,7 @@ void Grid::ComputeVolumeFractions(){
     }
 
 #ifdef USE_OPENMP
-    #pragma omp parallel for shared(cells, points, shapes, inflags) schedule(dynamic)
+    #pragma omp parallel for shared(cells, points, shapes, inflags) if(!Grid::forceSerialExecution) schedule(dynamic)
 #endif
     for (size_t i = 0; i < cells.size(); i++) {
         int count = 0;
@@ -172,7 +151,7 @@ void Grid::ComputeVolumeFractions(int npaxis){
     double dy_in = dy / (npaxis-1);
 
 #ifdef USE_OPENMP
-    #pragma omp parallel for shared(cells, points, shapes, inflags, dx_in, dy_in, npaxis) schedule(dynamic)
+    #pragma omp parallel for shared(cells, points, shapes, inflags, dx_in, dy_in, npaxis) if(!Grid::forceSerialExecution) schedule(dynamic)
 #endif
     for (size_t i = 0; i < cells.size(); i++) {
         // This code runs in parallel across multiple threads
@@ -207,7 +186,7 @@ void Grid::ComputeVolumeFractionsCurv(){
     }
 
 #ifdef USE_OPENMP
-    #pragma omp parallel for shared(cells, points, shapes, inflags) schedule(dynamic)
+    #pragma omp parallel for shared(cells, points, shapes, inflags) if(!Grid::forceSerialExecution) schedule(dynamic)
 #endif
     for (size_t i = 0; i < cells.size(); i++) {
         if (!(cells[i].loc_type == 1)) {
@@ -241,10 +220,10 @@ void Grid::ComputeVolumeFractionsCurv(){
             double area = PlaneBoxIntersection(x_min, x_max, y_min, y_max, planes, 2);
 
             double volfrac = area/cells[i].volume;
+            cells[i].volfrac = volfrac;
             continue;
         }
 
-        vertex cell_center{(x_min + x_max) / 2, (y_min + y_max) / 2};
         vertex P = cell.closest_point; 
         vertex N;
         bool use_plane = fabs(cell.closest_data[4]) < 1e-5;
@@ -282,7 +261,7 @@ void Grid::ComputeVolumeFractionsPlane(){
     }
 
 #ifdef USE_OPENMP
-    #pragma omp parallel for shared(cells, points, shapes, inflags) schedule(dynamic)
+    #pragma omp parallel for shared(cells, points, shapes, inflags) if(!Grid::forceSerialExecution) schedule(dynamic)
 #endif
     for (size_t i = 0; i < cells.size(); i++) {
         if (!(cells[i].loc_type == 1)) {
@@ -316,13 +295,12 @@ void Grid::ComputeVolumeFractionsPlane(){
             double area = PlaneBoxIntersection(x_min, x_max, y_min, y_max, planes, 2);
 
             double volfrac = area/cells[i].volume;
+            cells[i].volfrac = volfrac;
             continue;
         }
 
-        vertex cell_center{(x_min + x_max) / 2, (y_min + y_max) / 2};
         vertex P = cell.closest_point; 
         vertex N;
-        double R = fabs(1.0/cell.closest_data[4]);
         N[0] = cell.closest_data[1];
         N[1] = -cell.closest_data[0];
 
@@ -349,9 +327,9 @@ void Grid::ComputeVolumeFractionsAI(){
     }
 
 #ifdef USE_OPENMP
-    #pragma omp parallel for shared(cells, points, shapes, inflags) schedule(dynamic)
+    #pragma omp parallel for shared(cells, points, shapes, inflags) if(!Grid::forceSerialExecution) schedule(dynamic)
 #endif
-    for (int i = 0; i < cells.size(); i++) {
+    for (size_t i = 0; i < cells.size(); i++) {
         if (!(cells[i].loc_type == 1)) {
             int count = 0;
             for (int j = 0; j < 4; j++) {
@@ -382,13 +360,13 @@ void Grid::ComputeVolumeFractionsAI(){
             double area = PlaneBoxIntersection(x_min, x_max, y_min, y_max, planes, 2);
 
             double volfrac = area/cells[i].volume;
+            cells[i].volfrac = volfrac;
             continue;
         }
 
         double dx = x_max - x_min;
         double dy = y_max - y_min;
 
-        vertex cell_center{(x_min + x_max) / 2, (y_min + y_max) / 2};
         vertex P = cell.closest_point; 
         double data[5] = {cell.closest_data[0], cell.closest_data[1], cell.closest_data[2], cell.closest_data[3], cell.closest_data[4]};
         P[0] = (P[0] - x_min) / dx;
@@ -398,30 +376,30 @@ void Grid::ComputeVolumeFractionsAI(){
         double dxx_dt = data[2]/dx;
         double dyy_dt = data[3]/dy;
         double K = (dx_dt*dyy_dt - dy_dt*dxx_dt) / pow(dx_dt*dx_dt + dy_dt*dy_dt, 1.5);
-        K = (fabs(K) < 1e-3 ? 1e-3 : K);
+        double sign = std::signbit(K) ? -1.0 : 1.0;
+        K = (fabs(K) < 1e-5 ? 1e-5*sign : K);
         double norm = sqrt(dx_dt*dx_dt + dy_dt*dy_dt);
         dx_dt /= norm;
         dy_dt /= norm;
 
         vertex N{-dy_dt, dx_dt};
-        double R = fabs(1.0/K);
-
-        vertex C{(P[0]+R*N[0]), (P[1]+R*N[1])};
 
         double input[5] = {P[0], P[1], N[0], N[1], fabs(K)};
-        bool use_plane = fabs(K) < 1e-3;
+        bool use_plane = fabs(K) < 1e-5;
         double volfrac;
-        if (false) {
+        if (use_plane) {
+            P = cell.closest_point; 
+            N[0] = cell.closest_data[1];
+            N[1] = -cell.closest_data[0];
             double planes[1][3] = {
                 {N[0], N[1], -(N[0]*P[0] + N[1]*P[1])}
             };
     
-            volfrac = 1.0-PlaneBoxIntersection(0.0, 1.0, 0.0, 1.0, planes, 1);
+            volfrac = PlaneBoxIntersection(x_min, x_max, y_min, y_max, planes, 1)/cell.volume;
         } else {
             volfrac = model->Predict(input);
         }
         
-        //volfrac = ComputeCircleBoxIntersection(C, R, 0.0, 1.0, 0.0, 1.0);
         if (volfrac > 1.0){
             volfrac = 1.0;
         }
@@ -442,7 +420,7 @@ void Grid::PreComputeClosestPoints() {
     }
 
 #ifdef USE_OPENMP
-    #pragma omp parallel for shared(cells, points, shapes, inflags) schedule(dynamic)
+    #pragma omp parallel for shared(cells, points, shapes, inflags) if(!Grid::forceSerialExecution) schedule(dynamic)
 #endif
     for (size_t i = 0; i < cells.size(); i++) {
         if (!(cells[i].loc_type == 1)) {
@@ -457,7 +435,6 @@ void Grid::PreComputeClosestPoints() {
 
         vertex cell_center{(x_min + x_max) / 2, (y_min + y_max) / 2};
         vertex P; 
-        vertex N;
         double data[5];
         kd_trees[0].Search(cell_center, P, data); // data constains derivative and curvature information
         
@@ -483,7 +460,7 @@ void Grid::ComputeVolumeFractionsTraining(const std::string &filename){
     std::fstream fid;
     fid.open(filename, std::ios::app);
 
-    for (int i = 0; i < cells.size(); i++) {
+    for (size_t i = 0; i < cells.size(); i++) {
         if (!(cells[i].loc_type == 1)) {
             int count = 0;
             for (int j = 0; j < 4; j++) {
@@ -549,7 +526,7 @@ double Grid::ComputeTotalVolume(){
     double total_volume = 0.0;
 
 #ifdef USE_OPENMP
-    #pragma omp parallel for reduction(+:total_volume) schedule(static)
+    #pragma omp parallel for reduction(+:total_volume) if(!Grid::forceSerialExecution) schedule(static)
 #endif
     for (size_t i = 0; i < cells.size(); i++) {
         total_volume += cells[i].volume * cells[i].volfrac;
@@ -597,6 +574,9 @@ void Grid::ResetBox(BBox box, int nx, int ny){
             inflags[i] = shapes[0]->QueryPoint(points[i]) % 2 == 1;
         }
 
+#ifdef USE_OPENMP
+        #pragma omp parallel for shared(shapes, cells, box, dx, dy, nx) if(!Grid::forceSerialExecution) schedule(dynamic)
+#endif
         for (size_t i = 0; i < shapes[0]->seg_ids.size(); i++) {
             int v1 = shapes[0]->seg_ids[i][0];
             int v2 = shapes[0]->seg_ids[i][1];
@@ -614,10 +594,6 @@ void Grid::ResetBox(BBox box, int nx, int ny){
 
             cells[c1].loc_type = 1;
             cells[c2].loc_type = 1;
-
-            // cell centers
-            vertex center1 = {box.x_min + (i1 + 0.5)*dx, box.y_min + (j1 + 0.5)*dy};
-            vertex center2 = {box.x_min + (i2 + 0.5)*dx, box.y_min + (j2 + 0.5)*dy};
 
             // get all cells that the line between P1 and P2 crosses
             int x1 = i1, y1 = j1;
@@ -654,8 +630,6 @@ void Grid::ResetBox(BBox box, int nx, int ny){
                 if (cells[i].loc_type == 1) {
                     int x = i % (nx-1);
                     int y = i / (nx-1);
-                    int cell_index = x + y*(nx-1);
-                    vertex cp = cells[cell_index].closest_point;
                     if (x > 0) {
                         visited[i-1] = true;
                     }
@@ -680,7 +654,7 @@ void Grid::ResetBox(BBox box, int nx, int ny){
     }
 
     if (discontinuities.size() > 0){
-        for (int n = 0; n<discontinuities.size(); ++n) {
+        for (size_t n = 0; n<discontinuities.size(); ++n) {
             // for the point, find the cell they are in
             double x = discontinuities[n][0];
             double y = discontinuities[n][1];

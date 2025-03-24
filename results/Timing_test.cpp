@@ -15,9 +15,10 @@ int main(int argc, char** argv){
     BBox box{0.3, 0.7, 0.3, 0.7};
     Grid grid = CreateGrid(box, 5, 5, 0, np);
     grid.addModel("model.dat");
+    // grid.forceSerialExecution = true;
 
     vector<int> sizes = {32,64,128,256,512,1024,2048,4096};
-    vector<string> headers = {"Sizes","PIB 10", "PIB 20", "Plane Clipping", "OscCircle","AI"};
+    vector<string> headers = {"Sizes","PIB 5", "PIB 50", "Plane Clipping", "OscCircle","AI"};
     for (const auto& header : headers) {
         cout << setw(column_width) << header << " ";
     }
@@ -45,7 +46,7 @@ int main(int argc, char** argv){
 
         // pib 10
         start = std::chrono::high_resolution_clock::now();
-        grid.ComputeVolumeFractions(10);
+        grid.ComputeVolumeFractions(5);
         end = std::chrono::high_resolution_clock::now();
         duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
         seconds = duration.count() / 1000000.0;
@@ -54,7 +55,7 @@ int main(int argc, char** argv){
 
         // pib 20
         start = std::chrono::high_resolution_clock::now();
-        grid.ComputeVolumeFractions(20);
+        grid.ComputeVolumeFractions(50);
         end = std::chrono::high_resolution_clock::now();
         duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
         seconds = duration.count() / 1000000.0;
@@ -100,7 +101,7 @@ int main(int argc, char** argv){
     // np as string
     string np_str = to_string(np);
 
-    WriteLatexTable("Timing_table_"+np_str+".tex", headers, data,"Timing data for volume fraction initialization methods on ellipse in seconds. The ellipse is discretized with "+np_str+" points.");
+    WriteLatexTable("Timing_table_"+np_str+".tex", headers, data,"Timing data for volume fraction initialization methods on ellipse in seconds. The ellipse is discretized with "+np_str+" points.\\label{tab:timing_"+np_str+"}");
 
     return 0;
 }

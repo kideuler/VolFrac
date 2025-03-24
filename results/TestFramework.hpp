@@ -291,7 +291,7 @@ Grid CreateGrid(BBox box, int nx, int ny, int shape_type, int nsegs = 10000) {
             break;
         case 3: // Ghost
             for (int i = 0; i < num_segments; ++i) {
-                double t = 4.0 * double(i) / double(num_segments);
+                double t = 3.999 * double(i) / double(num_segments);
                 std::array<double,7> data1 = Ghost(t);
                 double x = data1[0];
                 double y = data1[1];
@@ -326,7 +326,7 @@ Grid CreateGrid(BBox box, int nx, int ny, int shape_type, int nsegs = 10000) {
             
             // left eye
             for (int i = num_segments; i < num_segments+num_segments/4; ++i) {
-                double t = 1.0 * double(i-num_segments) / double(num_segments/4) + 4.0;
+                double t = 0.999 * double(i-num_segments) / double(num_segments/4) + 4.0;
                 std::array<double,7> data1 = Ghost(t);
                 double x = data1[0];
                 double y = data1[1];
@@ -349,12 +349,13 @@ Grid CreateGrid(BBox box, int nx, int ny, int shape_type, int nsegs = 10000) {
                 data.push_back(arr2);
 
                 tree.Insert(P, arr);
-                segments.push_back({i, (i + 1) % (num_segments+num_segments/4)});
+                segments.push_back({i, (i + 1)});
             }
+            segments.back()[1] = num_segments;
 
             // Right eye
             for (int i = num_segments+num_segments/4; i < num_segments+num_segments/2; ++i) {
-                double t = 1.0 * double(i-(num_segments+num_segments/4)) / double(num_segments/4) + 5.0;
+                double t = 0.999 * double(i-(num_segments+num_segments/4)) / double(num_segments/4) + 5.0;
                 std::array<double,7> data1 = Ghost(t);
                 double x = data1[0];
                 double y = data1[1];
@@ -379,6 +380,7 @@ Grid CreateGrid(BBox box, int nx, int ny, int shape_type, int nsegs = 10000) {
                 tree.Insert(P, arr);
                 segments.push_back({i, (i + 1) % (num_segments+num_segments/2)});
             }
+            segments.back()[1] = num_segments+num_segments/4;
             grid.discontinuities = GhostDC();
             break;
     }

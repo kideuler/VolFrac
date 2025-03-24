@@ -6,7 +6,7 @@ using namespace std;
 
 int main() {
 
-    BBox box{-0.7, 1.1, -0.4, 1.8};
+    BBox box{-0.75, 1.25, -0.25, 1.75};
     Grid grid = CreateGrid(box, 5, 5, 3, 100000);
     grid.addModel("model.dat");
 
@@ -17,7 +17,7 @@ int main() {
         sizes_str.push_back(to_string(size));
     }
 
-    vector<string> headers = {"Sizes","PIB 10", "PIB 20", "Plane Clipping", "OscCircle", "AI"};
+    vector<string> headers = {"Sizes","PIB 5", "PIB 50", "Plane Clipping", "OscCircle", "AI"};
     for (const auto& header : headers) {
         cout << setw(column_width) << header << " ";
     }
@@ -39,13 +39,13 @@ int main() {
         // grid.ZeroVolumeFractions();
 
         // pib 10
-        grid.ComputeVolumeFractions(10);
+        grid.ComputeVolumeFractions(5);
         result = fabs(grid.ComputeTotalVolume() - exact) / exact;
         row.push_back(result);
         grid.ZeroVolumeFractions();
 
         // pib 10
-        grid.ComputeVolumeFractions(20);
+        grid.ComputeVolumeFractions(50);
         result = fabs(grid.ComputeTotalVolume() - exact) / exact;
         row.push_back(result);
         grid.ZeroVolumeFractions();

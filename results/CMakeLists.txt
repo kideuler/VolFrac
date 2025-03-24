@@ -43,7 +43,9 @@ add_custom_target(results
 
 # Add custom target to make plots
 add_custom_target(plots
-    COMMAND python ${CMAKE_SOURCE_DIR}/Plot_Accuracy_Results.py
+    COMMAND python ${CMAKE_SOURCE_DIR}/ghost.py
+    && python ${CMAKE_SOURCE_DIR}/Plot_Accuracy_Results.py
+    && python ${CMAKE_SOURCE_DIR}/Plot_Timing_Results.py
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     COMMENT "Generating plots"
 )

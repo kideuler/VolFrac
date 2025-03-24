@@ -68,7 +68,7 @@ def plot_ghost():
     # Left eye (t from 4 to 5)
     x_left_eye = []
     y_left_eye = []
-    for t_val in np.linspace(4, 5, 200):
+    for t_val in np.linspace(4, 5-0.001, 200):
         x_val = float(x.subs([(t, t_val), (pi, np.pi)]))
         y_val = float(y.subs([(t, t_val), (pi, np.pi)]))
         x_left_eye.append(x_val)
@@ -87,9 +87,13 @@ def plot_ghost():
     
     plt.axis('equal')
     plt.grid(True)
-    plt.title('Ghost Shape')
-    plt.legend()
-    plt.show()
+    #plt.title('Ghost Shape')
+    plt.legend(fontsize=16)
+    plt.draw()
+    # Make sure it gets displayed by flushing events
+    plt.pause(0.5)
 
 # Call the plotting function
-# plot_ghost()
+plot_ghost()
+
+plt.savefig('build/results/Ghost.png', dpi=300, bbox_inches='tight')
