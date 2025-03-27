@@ -1,4 +1,6 @@
-# VolFracAI
+# VolFrac
+
+[![Documentation](https://img.shields.io/badge/docs-online-blue.svg)](https://kideuler.github.io/VolFrac/)
 
 This project is built using CMake and uses GoogleTest for unit testing. Follow the steps below to build, test, and run results as configured in the GitHub Actions workflow.
 
