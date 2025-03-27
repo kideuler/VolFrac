@@ -27,6 +27,10 @@ jobs:
       with:
         python-version: '3.8'
 
+    - name: Install dependencies
+      run: |
+        sudo apt-get install doxygen
+
     - name: Create Python virtual environment
       working-directory: ${{github.workspace}}
       run: |
@@ -56,7 +60,7 @@ jobs:
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
       run: |
         source venv/bin/activate
-        cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Release -DARG=20000
+        cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Release -DARG=20000 -DBUILD_DOC=ON -DUSE_OPENMP=ON
 
     - name: Build
       working-directory: ${{github.workspace}}

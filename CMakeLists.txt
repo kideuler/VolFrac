@@ -6,7 +6,11 @@ project(VolFracAI)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
+# Option for building documentation
+option(BUILD_DOC "Build documentation with Doxygen" OFF)
+
 # Find OpenMP
+option(USE_OPENMP "Use OpenMP for parallel execution" OFF)
 if (USE_OPENMP)
     find_package(OpenMP REQUIRED)
 endif()
@@ -49,3 +53,46 @@ add_subdirectory(data)
 
 # Add results
 add_subdirectory(results)
+
+# Configure Doxygen documentation if BUILD_DOC is ON
+if(BUILD_DOC)
+    # Find Doxygen package
+    find_package(Doxygen REQUIRED)
+    
+    # Check if Doxygen was found
+    if(DOXYGEN_FOUND)
+        message(STATUS "Doxygen found. Documentation will be generated.")
+        
+        # Set input and output files for Doxygen
+        set(DOXYGEN_INPUT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/models")
+        set(DOXYGEN_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/docs")
+        set(DOXYGEN_INDEX_FILE "${DOXYGEN_OUTPUT_DIR}/html/index.html")
+        
+        # Create a Doxyfile with CMake variables
+        configure_file(
+            ${CMAKE_CURRENT_SOURCE_DIR}/docs/Doxyfile.in
+            ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
+            @ONLY
+        )
+        
+        # Add a custom target for building documentation
+        add_custom_target(doc
+            COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+            COMMENT "Generating API documentation with Doxygen"
+            VERBATIM
+        )
+        
+        # Make the documentation part of the ALL target
+        add_custom_target(doc_all ALL DEPENDS doc)
+        
+        # Install documentation
+        install(DIRECTORY ${DOXYGEN_OUTPUT_DIR}/html
+                DESTINATION share/doc/${PROJECT_NAME}
+                OPTIONAL)
+                
+        message(STATUS "Doxygen documentation will be generated in: ${DOXYGEN_OUTPUT_DIR}")
+    else()
+        message(WARNING "Doxygen not found. Documentation will not be generated.")
+    endif()
+endif()
