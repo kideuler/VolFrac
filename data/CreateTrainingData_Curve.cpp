@@ -21,9 +21,9 @@ int main(int argc, char** argv) {
     for (int n = 0; n<nruns; n++){
         // random point on unit square
         double x = (double)rand() / RAND_MAX;
-        x = 2.0*x - 0.5;
+        x = 1.5*x - 0.25;
         double y = (double)rand() / RAND_MAX;
-        y = 2.0*y - 0.5;
+        y = 1.5*y - 0.25;
 
         // random normal vector
         double nx = 2.0*((double)rand() / RAND_MAX)-1.0;

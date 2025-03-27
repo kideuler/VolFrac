@@ -63,7 +63,7 @@ except getopt.error as err:
     print (str(err))
 
 dataset = VolFracDataSet(path)
-dataloader = DataLoader(dataset, batch_size=512, shuffle=True)
+dataloader = DataLoader(dataset, batch_size=2048, shuffle=True)
 n_samples, n_features = dataset.x_train.shape
 
 
@@ -78,7 +78,7 @@ norm_module = NormalizationModule(
 
 # Training loop with early stopping
 best_val_loss = float('inf')
-patience = 500
+patience = 200
 patience_counter = 0
 grad_clip = 1.0
 
@@ -100,9 +100,9 @@ scheduler = DualScheduler(
     optimizer,
     min_lr=1e-6,
     max_lr=0.1,
-    patience=20,        # Regular plateau patience
+    patience=30,        # Regular plateau patience
     factor=0.5,         # How much to reduce LR on plateau
-    shock_threshold=50, # How many epochs without improvement before shocking
+    shock_threshold=60, # How many epochs without improvement before shocking
     shock_factor=100.0,   # How much to increase LR during shock
     max_shock_lr=0.05   # Maximum allowed shock LR
 )
@@ -235,5 +235,11 @@ if plot:
 training_time = (datetime.datetime.now() - start_time).total_seconds()
     
 print("Training completed!")
+
+# write results to slack
+message = f"Training completed in {training_time:.2f} seconds! Here are the results:\n\tBest Validation Loss: {best_val_loss:.6f}"
+file_path = f"{save_path}/final_loss_plot.png"
+
+send_message_with_file_to_slack(message, f"{save_path}/final_loss_plot.png", "Training Loss Plot", "This plot shows the training and validation loss over epochs.")
 
 # End of Script

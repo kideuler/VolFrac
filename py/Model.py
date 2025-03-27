@@ -7,6 +7,8 @@ from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 import getopt, sys
 import os
+from slack_sdk import WebClient
+from slack_sdk.errors import SlackApiError
 
 import datetime
 
@@ -217,7 +219,8 @@ class NeuralNet(nn.Module):
     
     def _init_weights(self, module):
         if isinstance(module, nn.Linear):
-            nn.init.xavier_uniform_(module.weight)
+            # He initialization (better for ReLU activation)
+            nn.init.kaiming_normal_(module.weight, mode='fan_in', nonlinearity='relu')
             if module.bias is not None:
                 nn.init.zeros_(module.bias)
     
@@ -285,3 +288,45 @@ def Write_model(filename,norm_module,dataset,model):
             else:
                 f.write(f"# Skipping parameter with unusual shape: {param.shape}\n")
 
+# Replace with your actual token and channel ID
+slack_token = os.environ.get("SLACK_BOT_TOKEN")  # It is recommended to store the token as an environment variable
+channel_id = "C08KL7ASXEU"  # or 'your_user_id' if you want to send a direct message
+
+# Initialize the Slack client
+client = WebClient(token=slack_token)
+
+def send_message_with_file_to_slack(message, file_path, file_title=None, file_comment=None):
+    """
+    Send a message and a file to a Slack channel
+    
+    Args:
+        message: Text message to send
+        file_path: Path to the file to upload
+        file_title: Optional title for the file (defaults to filename)
+        file_comment: Optional comment for the file
+    """
+    try:
+        # Send the text message first
+        message_response = client.chat_postMessage(
+            channel=channel_id,
+            text=message
+        )
+        print(f"Message sent: {message_response['ts']}")
+        
+        # Extract filename from path if no title provided
+        if file_title is None:
+            file_title = os.path.basename(file_path)
+            
+        # Upload the file
+        file_response = client.files_upload_v2(
+            channel=channel_id,
+            file=file_path,
+            title=file_title,
+            initial_comment=file_comment)
+        print(f"File uploaded: {file_response['file']['id']}")
+        
+        return True
+        
+    except SlackApiError as e:
+        print(f"Error: {e}")
+        return False
