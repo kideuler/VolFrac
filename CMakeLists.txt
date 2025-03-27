@@ -1,6 +1,23 @@
 cmake_minimum_required(VERSION 3.24)
 
-project(VolFracAI)
+# Read version from VERSION file
+file(READ "${CMAKE_CURRENT_SOURCE_DIR}/VERSION" PROJECT_VERSION_STRING)
+string(STRIP "${PROJECT_VERSION_STRING}" PROJECT_VERSION_STRING)
+
+# Extract version components
+string(REGEX MATCH "^([0-9]+)\\.([0-9]+)\\.([0-9]+)" _ "${PROJECT_VERSION_STRING}")
+set(PROJECT_VERSION_MAJOR "${CMAKE_MATCH_1}")
+set(PROJECT_VERSION_MINOR "${CMAKE_MATCH_2}")
+set(PROJECT_VERSION_PATCH "${CMAKE_MATCH_3}")
+
+# Configure project with version
+project(VolFrac
+        VERSION "${PROJECT_VERSION_STRING}"
+        DESCRIPTION "Volume Fraction Calculation with AI"
+        LANGUAGES CXX)
+
+# Output version information
+message(STATUS "Building ${PROJECT_NAME} version ${PROJECT_VERSION}")
 
 # Use C++17 standard
 set(CMAKE_CXX_STANDARD 17)
@@ -35,6 +52,12 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     "-Wpedantic"
   )
 endif()
+
+# Set version for shared library
+set_target_properties(VolFrac PROPERTIES
+    VERSION ${PROJECT_VERSION}
+    SOVERSION ${PROJECT_VERSION_MAJOR}
+)
 
 # Link OpenMP
 if(USE_OPENMP AND OpenMP_CXX_FOUND)

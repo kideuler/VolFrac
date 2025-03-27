@@ -1,5 +1,5 @@
 PROJECT_NAME           = "VolFrac"
-PROJECT_NUMBER         = 0.0.2
+PROJECT_NUMBER         = @PROJECT_VERSION@
 PROJECT_BRIEF          = "Volume Fraction Calculation"
 OUTPUT_DIRECTORY       = @DOXYGEN_OUTPUT_DIR@
 INPUT                  = @DOXYGEN_INPUT_DIR@
