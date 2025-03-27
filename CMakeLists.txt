@@ -6,6 +6,9 @@ project(VolFracAI)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
+# make tests optional
+option(BUILD_TESTS "Build tests" ON)
+
 # Option for building documentation
 option(BUILD_DOC "Build documentation with Doxygen" OFF)
 
@@ -38,15 +41,15 @@ if(USE_OPENMP AND OpenMP_CXX_FOUND)
     target_link_libraries(VolFrac PUBLIC OpenMP::OpenMP_CXX)
     target_compile_definitions(VolFrac PUBLIC USE_OPENMP)
     message(STATUS "OpenMP found and enabled")
-else()
-    message(WARNING "OpenMP not found. Parallel execution will be disabled.")
 endif()
 
 # Include directories
 target_include_directories(VolFrac PUBLIC src models results)
 
 # Add testing
-add_subdirectory(tests)
+if(BUILD_TESTS)
+    add_subdirectory(tests)
+endif()
 
 # Add data
 add_subdirectory(data)
