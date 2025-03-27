@@ -38,12 +38,10 @@ jobs:
 
       - name: Generate Documentation
         run: |
-          mkdir -p build/docs
-          # Configure Doxygen file
-          sed -e 's|@DOXYGEN_OUTPUT_DIR@|build/docs|g' \
-              -e 's|@DOXYGEN_INPUT_DIR@|"src models"|g' \
-              docs/Doxyfile.in > Doxyfile
-          doxygen Doxyfile
+          mkdir build
+          cd build
+          cmake -DBUILD_DOC=ON ..
+          make -j
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
