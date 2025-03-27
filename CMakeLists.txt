@@ -36,14 +36,23 @@ if (USE_OPENMP)
 endif()
 
 include(CTest)
+include(GNUInstallDirs)
+include(CMakePackageConfigHelpers)
 
 # Create a library from all .cpp and .hpp files
 file(GLOB_RECURSE SOURCES 
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp" 
+    "${CMAKE_CURRENT_SOURCE_DIR}/models/*.cpp")
+
+# Create list of all public header files
+file(GLOB_RECURSE PUBLIC_HEADERS
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*.hpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/models/*.cpp" 
     "${CMAKE_CURRENT_SOURCE_DIR}/models/*.hpp")
+
 add_library(VolFrac SHARED ${SOURCES})
+
+# Create an alias target for use in the build tree
+add_library(VolFrac::VolFrac ALIAS VolFrac)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   target_compile_options(VolFrac PRIVATE
@@ -53,10 +62,13 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   )
 endif()
 
-# Set version for shared library
+# Set version for shared library and other properties
 set_target_properties(VolFrac PROPERTIES
     VERSION ${PROJECT_VERSION}
     SOVERSION ${PROJECT_VERSION_MAJOR}
+    PUBLIC_HEADER "${PUBLIC_HEADERS}"
+    POSITION_INDEPENDENT_CODE ON
+    EXPORT_NAME VolFrac
 )
 
 # Link OpenMP
@@ -67,7 +79,13 @@ if(USE_OPENMP AND OpenMP_CXX_FOUND)
 endif()
 
 # Include directories
-target_include_directories(VolFrac PUBLIC src models results)
+target_include_directories(VolFrac 
+    PUBLIC 
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/models>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/results>
+        $<INSTALL_INTERFACE:include/VolFrac>
+)
 
 # Add testing
 if(BUILD_TESTS)
@@ -120,7 +138,7 @@ if(BUILD_DOC)
         
         # Install documentation
         install(DIRECTORY ${DOXYGEN_OUTPUT_DIR}/html
-                DESTINATION share/doc/${PROJECT_NAME}
+                DESTINATION ${CMAKE_INSTALL_DOCDIR}
                 OPTIONAL)
                 
         message(STATUS "Doxygen documentation will be generated in: ${DOXYGEN_OUTPUT_DIR}")
@@ -128,3 +146,59 @@ if(BUILD_DOC)
         message(WARNING "Doxygen not found. Documentation will not be generated.")
     endif()
 endif()
+
+# ============= INSTALLATION CONFIGURATION =============
+
+# Install targets
+install(TARGETS VolFrac
+        EXPORT VolFracTargets
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+        PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/VolFrac
+)
+
+# Install additional headers (if any special directory structure needs to be maintained)
+install(DIRECTORY src/ models/
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/VolFrac
+        FILES_MATCHING PATTERN "*.hpp"
+)
+
+# Generate and install export file for the targets
+install(EXPORT VolFracTargets
+        FILE VolFracTargets.cmake
+        NAMESPACE VolFrac::
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/VolFrac
+)
+
+# Generate the version file for the config file
+write_basic_package_version_file(
+    "${CMAKE_CURRENT_BINARY_DIR}/VolFracConfigVersion.cmake"
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY SameMajorVersion
+)
+
+# Create config file
+configure_package_config_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/VolFracConfig.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/VolFracConfig.cmake"
+    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/VolFrac
+)
+
+# Install config files
+install(FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/VolFracConfig.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/VolFracConfigVersion.cmake"
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/VolFrac
+)
+
+# ============= PACKAGING CONFIGURATION =============
+# Optional: Add CPack support for creating distributable packages
+set(CPACK_PACKAGE_NAME "VolFrac")
+set(CPACK_PACKAGE_VENDOR "Your Organization")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Volume Fraction Calculation with AI")
+set(CPACK_PACKAGE_VERSION ${PROJECT_VERSION})
+set(CPACK_PACKAGE_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
+set(CPACK_PACKAGE_VERSION_MINOR ${PROJECT_VERSION_MINOR})
+set(CPACK_PACKAGE_VERSION_PATCH ${PROJECT_VERSION_PATCH})
+include(CPack)
