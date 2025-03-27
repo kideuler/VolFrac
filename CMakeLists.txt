@@ -74,6 +74,12 @@ if(BUILD_DOC)
             ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
             @ONLY
         )
+
+        configure_file(
+            ${CMAKE_CURRENT_SOURCE_DIR}/docs/mainpage.md
+            ${CMAKE_CURRENT_BINARY_DIR}/docs/mainpage.md
+            COPYONLY
+        )
         
         # Add a custom target for building documentation
         add_custom_target(doc

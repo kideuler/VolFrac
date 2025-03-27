@@ -1,0 +1,1 @@
+USE_MDFILE_AS_MAINPAGE = docs/mainpage.md
